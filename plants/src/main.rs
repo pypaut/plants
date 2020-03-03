@@ -1,3 +1,6 @@
+use std::env;
+use std::fs;
+
 struct Pattern {
     pattern : char,
     replacement : String
@@ -49,11 +52,20 @@ fn parse_rules(data : &str) -> Vec<Pattern> {
 }
 
 fn main() {
-    println!("Hello, world!");
-    let rules = parse_rules("b:a\na:ab");
+    let args: Vec<String> = env::args().collect();
+    let axiom = args[1].clone();
+    let in_file = args[2].clone();
+    let iterations = args[3].parse::<i32>().unwrap();
 
-    let res = iterate("b", &rules);
-    let res = iterate(&res, &rules);
+    let rule_str = fs::read_to_string(in_file)
+        .expect("Failed reading file.");
+    let rules = parse_rules(&rule_str);
+
+    let mut res = axiom;
+
+    for _i in 0..iterations {
+        res = iterate(&res, &rules);
+    }
 
     println!("{}", res);
     //write a file with the result string
