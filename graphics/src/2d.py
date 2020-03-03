@@ -7,6 +7,7 @@ def execString(s, d=100, a=90):
     # Window properties
     t.bgcolor("black")
     t.color("white")
+    t.speed(0)
 
     # Drawing
     t.begin_fill()
@@ -38,7 +39,7 @@ def main():
     filename = sys.argv[1]
     f = open(filename, "r")
     s = f.read()
-    execString(s, d=50)
+    execString(s, d=10)
     f.close()
 
 
