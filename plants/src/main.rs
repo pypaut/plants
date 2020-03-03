@@ -13,7 +13,7 @@ impl Pattern {
     }
 }
 
-fn iterate(s : &str, patterns : Vec<Pattern>) -> String{
+fn iterate(s : &str, patterns : &Vec<Pattern>) -> String{
     let mut result = String::new();
 
     for c in s.chars() {
@@ -33,10 +33,27 @@ fn iterate(s : &str, patterns : Vec<Pattern>) -> String{
     result
 }
 
+fn parse_rules(data : &str) -> Vec<Pattern> {
+    let mut result = Vec::new();
+
+    for l in data.lines() {
+        let split : Vec<&str> = l.split(':').collect();
+        if split.len() != 2 {
+            panic!("Invalid rule");
+        }
+        result.push(Pattern::new(split[0].chars().next().unwrap(),
+                                 String::from(split[1])));
+    }
+
+    result
+}
+
 fn main() {
     println!("Hello, world!");
+    let rules = parse_rules("b:a\na:ab");
 
-    let res = iterate("b", vec![Pattern::new('b', String::from("a"))]);
+    let res = iterate("b", &rules);
+    let res = iterate(&res, &rules);
 
     println!("{}", res);
     //write a file with the result string
