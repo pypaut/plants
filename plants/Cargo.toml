@@ -1,7 +1,7 @@
 [package]
 name = "plants"
 version = "0.1.0"
-authors = ["Clément Rebut <clement.rebut@epita.fr>"]
+authors = ["Clément Rebut <clement.rebut@epita.fr>", "Geoffrey Jount <geoffrey.jount@epita.fr"]
 edition = "2018"
 
 [dependencies]
