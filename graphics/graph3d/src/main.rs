@@ -51,6 +51,18 @@ impl Turtle {
     fn forward(mut self, dist: f64) {
         self.pos = self.pos + self.heading;
     }
+    
+    fn rot_pitch(mut self, angle: f64) {
+
+    }
+
+    fn rot_roll(mut self, angle: f64) {
+
+    }
+
+    fn rot_yaw(mut self, angle: f64) {
+
+    }
 }
 
 fn read_str(s: &str) {
