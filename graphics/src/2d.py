@@ -21,6 +21,7 @@ def execString(s, d=100, a=90):
     t.speed(0)
 
     # Drawing
+    t.left(90)
     time.sleep(1)
 
     for c in s:
