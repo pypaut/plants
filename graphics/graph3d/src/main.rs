@@ -219,18 +219,50 @@ impl Mesh {
 
         len
     }
+
+    fn add_face(&mut self, a : usize, b : usize, c : usize) {
+        self.triangles.push(a);
+        self.triangles.push(b);
+        self.triangles.push(c);
+    }
 }
 
 fn gen_geometry(segments : Vec<Segment>) -> Mesh {
     let mut m = Mesh::new();
-    let mut top : Vec<usize> = Vec::new();//top vertices
-    let mut bot : Vec<usize> = Vec::new();//bottom vertices
 
     for s in segments {
+        let mut top : Vec<usize> = Vec::new();//top vertices
+        let mut bot : Vec<usize> = Vec::new();//bottom vertices
+
         for i in 0..6 { //generate hexagons
-            let rot = s.a.clone().rot_roll((2.0 * PI / 6.0) * f64{i});
-            let p = (rot.pos + rot.up) * (s.width / 2.0);//place a point
-            top.push(m.add_vert(p));
+            let mut rot = s.a.clone();
+            rot.rot_roll((2.0 * PI / 6.0) * i as f64);
+            let p = rot.pos + rot.up * (s.width / 2.0);//place a point
+            top.push(m.add_vert(&p));
+
+            let mut rot = s.b.clone();
+            rot.rot_roll((2.0 * PI / 6.0) * i as f64);
+            let p = rot.pos + rot.up * (s.width / 2.0);
+            bot.push(m.add_vert(&p));
+        }
+
+        let e1 = s.a.pos + s.a.heading * (s.width / 2.0);
+        let e2 = s.b.pos + s.b.heading * (s.width / 2.0);
+        let e1 = m.add_vert(&e1);
+        let e2 = m.add_vert(&e2);
+
+        //we now have all points placed, we need to set faces
+        for i in 0..6 {
+            let a_t = i;
+            let b_t = i + 1;
+            let a_b = i;
+            let b_b = i;
+
+            m.add_face(top[a_t], top[b_t], bot[a_b]);
+            m.add_face(top[b_t], bot[b_b], bot[a_b]);
+
+            m.add_face(top[a_t], e1, top[b_t]);
+            m.add_face(bot[b_b], e2, bot[a_b]);
         }
     }
 
