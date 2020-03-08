@@ -1,19 +1,11 @@
 use std::ops::{Add, Sub, Mul};
 use std::f64::consts::PI;
-
-struct Mat3 {
-    data : Vec<Vec<f64>>
-}
-
-impl Mat3 {
-    fn new(data : Vec<Vec<f64>>) -> Mat3 {
-        Mat3{data}
-    }
-
-    fn get(&self, i : usize, j : usize) -> f64 {
-        self.data[i][j]
-    }
-}
+use std::{env, fs};
+use std::fs::File;
+use std::error::Error;
+use std::io::Write;
+use quaternion;
+use vecmath;
 
 #[derive(Debug)]
 #[derive(Clone, Copy)]
@@ -28,48 +20,12 @@ impl Vector3 {
         Vector3{x, y, z}
     }
 
-    fn cross(&self, other : Vector3) -> Vector3 {
-        Vector3{x: self.y * other.z - self.z * other.y,
-        y: self.z * other.x - self.x * other.z,
-        z: self.x * other.y - self.y * other.x}
+    fn from(v : vecmath::Vector3<f64>) -> Vector3 {
+        Vector3{x: v[0], y: v[1], z: v[2]}
     }
 
-    fn get(&self, i : usize) -> f64 {
-        if i == 0 {
-            self.x
-        }
-        else if i == 1 {
-            self.y
-        }
-        else {
-            self.z
-        }
-    }
-
-    fn set(&mut self, value : f64, i : usize) {
-        if i == 0 {
-            self.x = value;
-        }
-        else if i == 1 {
-            self.y = value;
-        }
-        else {
-            self.z = value;
-        }
-    }
-
-    fn apply(&self, mat : &Mat3) -> Vector3 {
-        let mut res = Vector3::new(0f64, 0f64, 0f64);
-
-        for i in 0..3 {
-            let mut tmp = 0f64;
-            for j in 0..3 {
-                tmp += self.get(j) * mat.get(i, j);
-            }
-            res.set(tmp, i);
-        }
-
-        res
+    fn to_arr(&self) -> vecmath::Vector3<f64> {
+        [self.x, self.y, self.z]
     }
 }
 
@@ -124,36 +80,36 @@ impl Turtle {
     }
     
     fn rot_pitch(&mut self, a: f64) {
-        let mat = Mat3{data: vec![
-        vec![a.cos(), 0.0, -a.sin()],
-        vec![0.0, 1.0, 0.0],
-        vec![a.sin(), 0.0, a.cos()]]};
+        let quat = quaternion::axis_angle(self.left.to_arr(), a);
 
-        self.heading = self.heading.apply(&mat);
-        self.left = self.left.apply(&mat);
-        self.up = self.up.apply(&mat);
+        self.heading = Vector3::from(quaternion::rotate_vector(quat,
+                                                               self.heading.to_arr()));
+        self.left = Vector3::from(quaternion::rotate_vector(quat,
+                                                            self.left.to_arr()));
+        self.up = Vector3::from(quaternion::rotate_vector(quat,
+                                                            self.up.to_arr()));
     }
 
     fn rot_roll(&mut self, a: f64) {
-        let mat = Mat3{data: vec![
-            vec![1.0, 0.0, 0.0],
-            vec![0.0, a.cos(), -a.sin()],
-            vec![0.0, a.sin(), a.cos()]]};
+        let quat = quaternion::axis_angle(self.heading.to_arr(), a);
 
-        self.heading = self.heading.apply(&mat);
-        self.left = self.left.apply(&mat);
-        self.up = self.up.apply(&mat);
+        self.heading = Vector3::from(quaternion::rotate_vector(quat,
+                                                               self.heading.to_arr()));
+        self.left = Vector3::from(quaternion::rotate_vector(quat,
+                                                            self.left.to_arr()));
+        self.up = Vector3::from(quaternion::rotate_vector(quat,
+                                                          self.up.to_arr()));
     }
 
     fn rot_yaw(&mut self, a: f64) {
-        let mat = Mat3{data: vec![
-            vec![a.cos(), a.sin(), 0.0],
-            vec![-a.sin(), a.cos(), 0.0],
-            vec![0.0, 0.0, 1.0]]};
+        let quat = quaternion::axis_angle(self.up.to_arr(), a);
 
-        self.heading = self.heading.apply(&mat);
-        self.left = self.left.apply(&mat);
-        self.up = self.up.apply(&mat);
+        self.heading = Vector3::from(quaternion::rotate_vector(quat,
+                                                               self.heading.to_arr()));
+        self.left = Vector3::from(quaternion::rotate_vector(quat,
+                                                            self.left.to_arr()));
+        self.up = Vector3::from(quaternion::rotate_vector(quat,
+                                                          self.up.to_arr()));
     }
 }
 
@@ -182,7 +138,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> Vec<Segment> {
                 let a = t.clone();
                 t.forward(dist);
                 let b = t.clone();
-                segments.push(Segment{a, b, width : dist / 4.0});
+                segments.push(Segment{a, b, width : dist / 2.0});
                 },//place two points
             'f' => {t.forward(dist);},//only move
             '+' => {t.rot_yaw(angle);},
@@ -235,8 +191,10 @@ impl Mesh {
         res.push_str("\n");
 
         for i in (0..self.triangles.len()).step_by(3) {
-            res.push_str(&String::from(format!("f {}// {}// {}//\n", self.triangles[i],
-                self.triangles[i + 1], self.triangles[i + 2])));
+            res.push_str(&String::from(format!("f {}// {}// {}//\n",
+                                               self.triangles[i] + 1,
+                                               self.triangles[i + 1] + 1,
+                                               self.triangles[i + 2] + 1)));
         }
 
         res
@@ -250,19 +208,21 @@ fn gen_geometry(segments : Vec<Segment>) -> Mesh {
         let mut top : Vec<usize> = Vec::new();//top vertices
         let mut bot : Vec<usize> = Vec::new();//bottom vertices
 
+        //println!("{:?}", s.a);
         for i in 0..6 { //generate hexagons
             let mut rot = s.a.clone();
-            rot.rot_roll((2.0 * PI / 6.0) * i as f64);
+            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
+            //println!("{:?}", rot);
             let p = rot.pos + rot.up * (s.width / 2.0);//place a point
             top.push(m.add_vert(&p));
 
             let mut rot = s.b.clone();
-            rot.rot_roll((2.0 * PI / 6.0) * i as f64);
+            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
             let p = rot.pos + rot.up * (s.width / 2.0);
             bot.push(m.add_vert(&p));
         }
 
-        let e1 = s.a.pos + s.a.heading * (s.width / 2.0);
+        let e1 = s.a.pos - s.a.heading * (s.width / 2.0);
         let e2 = s.b.pos + s.b.heading * (s.width / 2.0);
         let e1 = m.add_vert(&e1);
         let e2 = m.add_vert(&e2);
@@ -270,9 +230,9 @@ fn gen_geometry(segments : Vec<Segment>) -> Mesh {
         //we now have all points placed, we need to set faces
         for i in 0..6 {
             let a_t = i;
-            let b_t = i + 1;
+            let b_t = (i + 1) % 6;
             let a_b = i;
-            let b_b = i;
+            let b_b = (i + 1) % 6;
 
             m.add_face(top[a_t], top[b_t], bot[a_b]);
             m.add_face(top[b_t], bot[b_b], bot[a_b]);
@@ -286,9 +246,27 @@ fn gen_geometry(segments : Vec<Segment>) -> Mesh {
 }
 
 fn main() {
-    println!("Hello, world!");
-    let mut t = Turtle::new();
-    println!("{:?}", &t);
-    t.rot_pitch(PI/2.0);
-    println!("{:?}", &t);
+    let args : Vec<String> = env::args().collect();
+    let input = args[1].clone();
+    let output = args[2].clone();
+    let angle = args[3].parse::<f64>().expect("Failed while parsing angle.");
+    let dist = args[4].parse::<f64>().expect("Failed while parsing distance.");
+
+    //read the file, get the string, generate the segments, generate the geometry, print the geometry
+    let in_str = fs::read_to_string(input)
+        .expect("Failed reading file.");
+
+    let segments = read_str(&in_str, dist, angle * (PI / 180.0));
+    let mesh = gen_geometry(segments);
+    let out_str = mesh.get_str();
+
+    let mut file = match File::create(&output) {
+        Err(why) => panic!("couldn't create {}: {}", output, why.description()),
+        Ok(file) => file,
+    };
+
+    match file.write_all(out_str.as_bytes()) {
+        Err(why) => panic!("couldn't write to {}: {}", output, why.description()),
+        Ok(_) => println!("successfully wrote to {}", output),
+    }
 }
