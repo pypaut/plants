@@ -102,6 +102,7 @@ impl Sub for Vector3 {
 }
 
 #[derive(Debug)]
+#[derive(Copy, Clone)]
 struct Turtle {
     pos: Vector3,
     heading: Vector3,
@@ -133,7 +134,7 @@ impl Turtle {
         self.up = self.up.apply(&mat);
     }
 
-    fn rot_roll(&mut self, angle: f64) {
+    fn rot_roll(&mut self, a: f64) {
         let mat = Mat3{data: vec![
             vec![1.0, 0.0, 0.0],
             vec![0.0, a.cos(), -a.sin()],
@@ -144,7 +145,7 @@ impl Turtle {
         self.up = self.up.apply(&mat);
     }
 
-    fn rot_yaw(&mut self, angle: f64) {
+    fn rot_yaw(&mut self, a: f64) {
         let mat = Mat3{data: vec![
             vec![a.cos(), a.sin(), 0.0],
             vec![-a.sin(), a.cos(), 0.0],
@@ -156,7 +157,19 @@ impl Turtle {
     }
 }
 
-fn read_str(s: &str) {
+struct Segment {
+    a : Turtle,
+    b : Turtle,
+    width : f64
+}
+
+fn read_str(s : &str, dist : f64, angle : f64) -> Vec<Segment> {
+    let mut t = Turtle::new();
+    let mut stack : Vec<Turtle> = Vec::with_capacity(10);
+    let mut leaf_mode = 0;//if true, we are creating a leaf
+
+    let mut segments : Vec<Segment> = Vec::new();
+
     let it = s.chars();
     for c in it {
         //read characters and add data to the output file
@@ -164,7 +177,64 @@ fn read_str(s: &str) {
         //basic movements in space: +-&^\/|fF
         //branches: [(push state) ](pop state)
         //leaves: {(start polygon) }(end polygon)
+        match c {
+            'F' => {
+                let a = t.clone();
+                t.forward(dist);
+                let b = t.clone();
+                segments.push(Segment{a, b, width : dist / 4.0});
+                },//place two points
+            'f' => {t.forward(dist);},//only move
+            '+' => {t.rot_yaw(angle);},
+            '-' => {t.rot_yaw(-angle);},
+            '&' => {t.rot_pitch(angle);},
+            '^' => {t.rot_pitch(-angle);},
+            '\\' => {t.rot_roll(angle);},
+            '/' => {t.rot_roll(-angle);},
+            '|' => {t.rot_yaw(PI);},
+            '[' => {stack.push(t.clone());},
+            ']' => {t = stack.pop().unwrap_or(t);},
+            '{' => {leaf_mode += 1;},//TODO: How can we manage leaves?
+            '}' => {leaf_mode -= 1;},
+            _ => {}//do nothing on unknown char
+        }
     }
+
+    segments
+}
+
+struct Mesh {
+    verts : Vec<Vector3>,
+    triangles : Vec<usize>
+}
+
+impl Mesh {
+    fn new() -> Mesh {
+        Mesh{verts: Vec::new(), triangles: Vec::new()}
+    }
+
+    fn add_vert(&mut self, p : &Vector3) -> usize {
+        let len = self.verts.len();
+        self.verts.push(p.clone());
+
+        len
+    }
+}
+
+fn gen_geometry(segments : Vec<Segment>) -> Mesh {
+    let mut m = Mesh::new();
+    let mut top : Vec<usize> = Vec::new();//top vertices
+    let mut bot : Vec<usize> = Vec::new();//bottom vertices
+
+    for s in segments {
+        for i in 0..6 { //generate hexagons
+            let rot = s.a.clone().rot_roll((2.0 * PI / 6.0) * f64{i});
+            let p = (rot.pos + rot.up) * (s.width / 2.0);//place a point
+            top.push(m.add_vert(p));
+        }
+    }
+
+    m
 }
 
 fn main() {
