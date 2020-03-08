@@ -119,13 +119,20 @@ struct Segment {
     width : f64
 }
 
-fn read_str(s : &str, dist : f64, angle : f64) -> Vec<Segment> {
+#[derive(Clone)]
+struct Leaf {
+    pts : Vec<Vector3>
+}
+
+fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
     let mut t = Turtle::new();
     let mut stack : Vec<Turtle> = Vec::with_capacity(10);
     let mut leaf_mode = 0;//if true, we are creating a leaf
 
     let mut segments : Vec<Segment> = Vec::new();
+    let mut leaves : Vec<Leaf> = Vec::new();
 
+    let mut tmp_leaf = Leaf{pts: Vec::new()};
     let it = s.chars();
     for c in it {
         //read characters and add data to the output file
@@ -140,7 +147,12 @@ fn read_str(s : &str, dist : f64, angle : f64) -> Vec<Segment> {
                 let b = t.clone();
                 segments.push(Segment{a, b, width : dist / 2.0});
                 },//place two points
-            'f' => {t.forward(dist);},//only move
+            'f' => {
+                if leaf_mode > 0 {
+                    tmp_leaf.pts.push(t.pos.clone());
+                }
+                t.forward(dist);
+                },//only move except if we are creating a leaf
             '+' => {t.rot_yaw(angle);},
             '-' => {t.rot_yaw(-angle);},
             '&' => {t.rot_pitch(angle);},
@@ -151,22 +163,31 @@ fn read_str(s : &str, dist : f64, angle : f64) -> Vec<Segment> {
             '[' => {stack.push(t.clone());},
             ']' => {t = stack.pop().unwrap_or(t);},
             '{' => {leaf_mode += 1;},//TODO: How can we manage leaves?
-            '}' => {leaf_mode -= 1;},
+            '}' => {
+                leaf_mode -= 1;
+                if leaf_mode == 0 {//ending a leaf
+                    tmp_leaf.pts.push(t.pos.clone());
+                    leaves.push(tmp_leaf.clone());
+                    tmp_leaf = Leaf{pts: Vec::new()};
+                }
+                },
             _ => {}//do nothing on unknown char
         }
     }
 
-    segments
+    (segments, leaves)
 }
 
 struct Mesh {
     verts : Vec<Vector3>,
-    triangles : Vec<usize>
+    triangles : Vec<usize>,
+    leaf_faces : Vec<Vec<usize>>
 }
 
 impl Mesh {
     fn new() -> Mesh {
-        Mesh{verts: Vec::new(), triangles: Vec::new()}
+        Mesh{verts: Vec::new(), triangles: Vec::new(),
+            leaf_faces: Vec::new()}
     }
 
     fn add_vert(&mut self, p : &Vector3) -> usize {
@@ -182,13 +203,17 @@ impl Mesh {
         self.triangles.push(c);
     }
 
+    fn add_poly(&mut self, f : Vec<usize>) {
+            self.leaf_faces.push(f.clone());
+    }
+
     fn get_str(self) -> String {
         let mut res = String::new();
         for v in self.verts {
             res.push_str(&String::from(format!("v {} {} {}\n", v.x, v.y, v.z)));
         }
 
-        res.push_str("\n");
+        res.push_str("\ng branches\n");
 
         for i in (0..self.triangles.len()).step_by(3) {
             res.push_str(&String::from(format!("f {}// {}// {}//\n",
@@ -197,11 +222,20 @@ impl Mesh {
                                                self.triangles[i + 2] + 1)));
         }
 
+        res.push_str("\ng leaves\n");
+        for f in self.leaf_faces {
+            res.push_str("f");
+            for v in f {
+                res.push_str(&String::from(format!(" {}//", v + 1)));
+            }
+            res.push_str("\n");
+        }
+
         res
     }
 }
 
-fn gen_geometry(segments : Vec<Segment>) -> Mesh {
+fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> Mesh {
     let mut m = Mesh::new();
 
     for s in segments {
@@ -242,6 +276,15 @@ fn gen_geometry(segments : Vec<Segment>) -> Mesh {
         }
     }
 
+    for l in leaves {
+        let mut verts : Vec<usize> = Vec::new();
+
+        for v in l.pts {
+            verts.push(m.add_vert(&v));
+        }
+        m.add_poly(verts);
+    }
+
     m
 }
 
@@ -256,8 +299,9 @@ fn main() {
     let in_str = fs::read_to_string(input)
         .expect("Failed reading file.");
 
-    let segments = read_str(&in_str, dist, angle * (PI / 180.0));
-    let mesh = gen_geometry(segments);
+    let (segments, leaves) = read_str(&in_str,
+                                      dist, angle * (PI / 180.0));
+    let mesh = gen_geometry(segments, leaves);
     let out_str = mesh.get_str();
 
     let mut file = match File::create(&output) {
