@@ -225,6 +225,22 @@ impl Mesh {
         self.triangles.push(b);
         self.triangles.push(c);
     }
+
+    fn get_str(self) -> String {
+        let mut res = String::new();
+        for v in self.verts {
+            res.push_str(&String::from(format!("v {} {} {}\n", v.x, v.y, v.z)));
+        }
+
+        res.push_str("\n");
+
+        for i in (0..self.triangles.len()).step_by(3) {
+            res.push_str(&String::from(format!("f {}// {}// {}//\n", self.triangles[i],
+                self.triangles[i + 1], self.triangles[i + 2])));
+        }
+
+        res
+    }
 }
 
 fn gen_geometry(segments : Vec<Segment>) -> Mesh {
