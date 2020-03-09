@@ -7,25 +7,20 @@ use std::io::Write;
 mod vector3;
 mod mesh;
 mod turtle;
+mod segment;
 
-
-struct Segment {
-    a : turtle::Turtle,
-    b : turtle::Turtle,
-    width : f64
-}
 
 #[derive(Clone)]
 struct Leaf {
     pts : Vec<vector3::Vector3>
 }
 
-fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
+fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<segment::Segment>, Vec<Leaf>) {
     let mut t = turtle::Turtle::new();
     let mut stack : Vec<turtle::Turtle> = Vec::with_capacity(10);
     let mut leaf_mode = 0;  // If true, we are creating a leaf
 
-    let mut segments : Vec<Segment> = Vec::new();
+    let mut segments : Vec<segment::Segment> = Vec::new();
     let mut leaves : Vec<Leaf> = Vec::new();
 
     let mut tmp_leaf = Leaf{pts: Vec::new()};
@@ -41,7 +36,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
                 let a = t.clone();
                 t.forward(dist);
                 let b = t.clone();
-                segments.push(Segment{a, b, width : dist / 2.0});
+                segments.push(segment::Segment{a, b, width : dist / 2.0});
             },  // Place two points
             'f' => {
                 if leaf_mode > 0 {
@@ -74,7 +69,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
     (segments, leaves)
 }
 
-fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> mesh::Mesh {
+fn gen_geometry(segments : Vec<segment::Segment>, leaves : Vec<Leaf>) -> mesh::Mesh {
     let mut m = mesh::Mesh::new();
 
     for s in segments {
@@ -83,20 +78,20 @@ fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> mesh::Mesh {
 
         //println!("{:?}", s.a);
         for i in 0..6 {  // Generate hexagons
-            let mut rot = s.a.clone();
+            let mut rot = s.a().clone();
             rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
             //println!("{:?}", rot);
-            let p = rot.pos() + rot.up() * (s.width / 2.0);  // Place point
+            let p = rot.pos() + rot.up() * (s.width() / 2.0);  // Place point
             top.push(m.add_vert(&p));
 
             let mut rot = s.b.clone();
             rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
-            let p = rot.pos() + rot.up() * (s.width / 2.0);
+            let p = rot.pos() + rot.up() * (s.width() / 2.0);
             bot.push(m.add_vert(&p));
         }
 
-        let e1 = s.a.pos() - s.a.heading() * (s.width / 2.0);
-        let e2 = s.b.pos() + s.b.heading() * (s.width / 2.0);
+        let e1 = s.a().pos() - s.a().heading() * (s.width() / 2.0);
+        let e2 = s.b().pos() + s.b().heading() * (s.width() / 2.0);
         let e1 = m.add_vert(&e1);
         let e2 = m.add_vert(&e2);
 
