@@ -3,71 +3,15 @@ use std::{env, fs};
 use std::fs::File;
 use std::error::Error;
 use std::io::Write;
-use quaternion;
 
 mod vector3;
 mod mesh;
+mod turtle;
 
-
-#[derive(Debug)]
-#[derive(Copy, Clone)]
-struct Turtle {
-    pos: vector3::Vector3,
-    heading: vector3::Vector3,
-    left: vector3::Vector3,
-    up: vector3::Vector3
-}
-
-impl Turtle {
-    // Create a new default turtle pointing upward
-    fn new() -> Turtle {
-        Turtle{pos: vector3::Vector3::new(0f64, 0f64, 0f64),
-        heading: vector3::Vector3::new(0f64, 0f64, 1f64),
-        left: vector3::Vector3::new(0f64, -1f64, 0f64),
-        up: vector3::Vector3::new(1f64, 0f64, 0f64)}
-    }
-
-    fn forward(&mut self, dist: f64) {
-        self.pos = self.pos + self.heading * dist;
-    }
-
-    fn rot_pitch(&mut self, a: f64) {  // y
-        let quat = quaternion::axis_angle(self.left.to_arr(), a);
-
-        self.heading = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                               self.heading.to_arr()));
-        self.left = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                            self.left.to_arr()));
-        self.up = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                            self.up.to_arr()));
-    }
-
-    fn rot_roll(&mut self, a: f64) {  // x
-        let quat = quaternion::axis_angle(self.heading.to_arr(), a);
-
-        self.heading = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                               self.heading.to_arr()));
-        self.left = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                            self.left.to_arr()));
-        self.up = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                          self.up.to_arr()));
-    }
-
-    fn rot_yaw(&mut self, a: f64) {  // z
-        let quat = quaternion::axis_angle(self.up.to_arr(), a);
-
-        self.heading = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                               self.heading.to_arr()));
-        self.left = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                            self.left.to_arr()));
-        self.up = vector3::Vector3::from(quaternion::rotate_vector(quat,
-                                                          self.up.to_arr()));
-    }
-}
 
 struct Segment {
-    a : Turtle,
-    b : Turtle,
+    a : turtle::Turtle,
+    b : turtle::Turtle,
     width : f64
 }
 
@@ -77,8 +21,8 @@ struct Leaf {
 }
 
 fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
-    let mut t = Turtle::new();
-    let mut stack : Vec<Turtle> = Vec::with_capacity(10);
+    let mut t = turtle::Turtle::new();
+    let mut stack : Vec<turtle::Turtle> = Vec::with_capacity(10);
     let mut leaf_mode = 0;  // If true, we are creating a leaf
 
     let mut segments : Vec<Segment> = Vec::new();
@@ -101,7 +45,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
             },  // Place two points
             'f' => {
                 if leaf_mode > 0 {
-                    tmp_leaf.pts.push(t.pos.clone());
+                    tmp_leaf.pts.push(t.pos().clone());
                 }
                 t.forward(dist);
             },  // Only move except if we are creating a leaf
@@ -118,7 +62,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
             '}' => {
                 leaf_mode -= 1;
                 if leaf_mode == 0 {  // Ending a leaf
-                    tmp_leaf.pts.push(t.pos.clone());
+                    tmp_leaf.pts.push(t.pos().clone());
                     leaves.push(tmp_leaf.clone());
                     tmp_leaf = Leaf{pts: Vec::new()};
                 }
@@ -142,17 +86,17 @@ fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> mesh::Mesh {
             let mut rot = s.a.clone();
             rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
             //println!("{:?}", rot);
-            let p = rot.pos + rot.up * (s.width / 2.0);  // Place point
+            let p = rot.pos() + rot.up() * (s.width / 2.0);  // Place point
             top.push(m.add_vert(&p));
 
             let mut rot = s.b.clone();
             rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
-            let p = rot.pos + rot.up * (s.width / 2.0);
+            let p = rot.pos() + rot.up() * (s.width / 2.0);
             bot.push(m.add_vert(&p));
         }
 
-        let e1 = s.a.pos - s.a.heading * (s.width / 2.0);
-        let e2 = s.b.pos + s.b.heading * (s.width / 2.0);
+        let e1 = s.a.pos() - s.a.heading() * (s.width / 2.0);
+        let e2 = s.b.pos() + s.b.heading() * (s.width / 2.0);
         let e1 = m.add_vert(&e1);
         let e2 = m.add_vert(&e2);
 
