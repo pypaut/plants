@@ -5,3 +5,4 @@ authors = ["Clément Rebut <clement.rebut@epita.fr>", "Geoffrey Jount <geoffrey.
 edition = "2018"
 
 [dependencies]
+rand = "0.7"

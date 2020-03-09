@@ -8,7 +8,7 @@ pub fn iterate(s : &str, patterns : &Vec<pattern::Pattern>) -> String {
     for c in s.chars() {
         let mut found = false;
         for p in patterns.iter() {
-            if p.test(c) {
+            if p.test(c, p.p) {
                 result.push_str(&p.replacement);
                 found = true;
                 break;
