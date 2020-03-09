@@ -4,16 +4,14 @@ use std::fs::File;
 use std::error::Error;
 use std::io::Write;
 
-mod vector3;
+mod leaf;
 mod mesh;
-mod turtle;
 mod segment;
+mod turtle;
+mod vector3;
 
+use leaf::Leaf;
 
-#[derive(Clone)]
-struct Leaf {
-    pts : Vec<vector3::Vector3>
-}
 
 fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<segment::Segment>, Vec<Leaf>) {
     let mut t = turtle::Turtle::new();
