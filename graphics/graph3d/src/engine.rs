@@ -1,14 +1,38 @@
 use std::f64::consts::PI;
 
-use crate::leaf;
 use crate::turtle;
-use crate::segment;
 use crate::mesh;
+use crate::vector3;
 
-use leaf::Leaf;
 use turtle::Turtle;
-use segment::Segment;
 use mesh::Mesh;
+use vector3::Vector3;
+
+
+pub struct Segment {
+    pub a : Turtle,
+    pub b : Turtle,
+    pub width : f64
+}
+
+#[derive(Clone)]
+pub struct Leaf {
+    pub pts : Vec<Vector3>
+}
+
+impl Segment {
+    pub fn a(&self) -> Turtle {
+        self.a
+    }
+
+    pub fn b(&self) -> Turtle {
+        self.b
+    }
+
+    pub fn width(&self) -> f64 {
+        self.width
+    }
+}
 
 
 pub fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {

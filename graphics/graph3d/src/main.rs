@@ -5,9 +5,7 @@ use std::error::Error;
 use std::io::Write;
 
 mod engine;
-mod leaf;
 mod mesh;
-mod segment;
 mod turtle;
 mod vector3;
 
