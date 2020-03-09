@@ -11,14 +11,17 @@ mod turtle;
 mod vector3;
 
 use leaf::Leaf;
+use mesh::Mesh;
+use segment::Segment;
+use turtle::Turtle;
 
 
-fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<segment::Segment>, Vec<Leaf>) {
-    let mut t = turtle::Turtle::new();
-    let mut stack : Vec<turtle::Turtle> = Vec::with_capacity(10);
+fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
+    let mut t = Turtle::new();
+    let mut stack : Vec<Turtle> = Vec::with_capacity(10);
     let mut leaf_mode = 0;  // If true, we are creating a leaf
 
-    let mut segments : Vec<segment::Segment> = Vec::new();
+    let mut segments : Vec<Segment> = Vec::new();
     let mut leaves : Vec<Leaf> = Vec::new();
 
     let mut tmp_leaf = Leaf{pts: Vec::new()};
@@ -34,7 +37,7 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<segment::Segment>, Vec<Le
                 let a = t.clone();
                 t.forward(dist);
                 let b = t.clone();
-                segments.push(segment::Segment{a, b, width : dist / 2.0});
+                segments.push(Segment{a, b, width : dist / 2.0});
             },  // Place two points
             'f' => {
                 if leaf_mode > 0 {
@@ -67,8 +70,8 @@ fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<segment::Segment>, Vec<Le
     (segments, leaves)
 }
 
-fn gen_geometry(segments : Vec<segment::Segment>, leaves : Vec<Leaf>) -> mesh::Mesh {
-    let mut m = mesh::Mesh::new();
+fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> Mesh {
+    let mut m = Mesh::new();
 
     for s in segments {
         let mut top : Vec<usize> = Vec::new();  // Top vertices
