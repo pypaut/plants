@@ -64,7 +64,7 @@ def main():
     d = 10
     a = 22.5
     if len(sys.argv) == 3:
-        a = int(sys.argv[2])
+        a = float(sys.argv[2])
     filename = sys.argv[1]
     f = open(filename, "r")
     s = f.read()
