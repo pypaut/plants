@@ -5,17 +5,17 @@ use crate::pattern;
 pub fn iterate(s : &str, patterns : &Vec<pattern::Pattern>) -> String {
     let mut result = String::new();
 
-    for c in s.chars() {
+    for i in 0..s.len() {
         let mut found = false;
         for p in patterns.iter() {
-            if p.test(c, p.p) {
+            if p.test(i, s.to_string()) {
                 result.push_str(&p.replacement);
                 found = true;
                 break;
             }
         }
         if !found {
-            result.push(c)
+            result.push(s.chars().nth(i).unwrap())
         }
     }
 
