@@ -22,6 +22,5 @@ fn main() {
         res = iterate::iterate(&res, &rules);
     }
 
-    println!("{}", res);
-    // TODO : Write a file with the result string
+    fs::write("result.txt", res).expect("Unable to write to 'result.txt' file");
 }

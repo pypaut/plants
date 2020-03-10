@@ -1,2 +1,4 @@
-plants/target/
+*.swp
+.idea/
+target/
 result.txt
