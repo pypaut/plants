@@ -1,4 +1,6 @@
 use rand::{thread_rng, Rng};
+use std::str::Chars;
+use std::iter::Rev;
 
 #[derive(Debug)]
 pub struct Pattern {
@@ -9,9 +11,129 @@ pub struct Pattern {
     pub right : Option<String>,         // Right context
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::borrow::BorrowMut;
+
+    #[test]
+    fn rctx_true() {
+        let s = String::from("bc");
+        let ctx = String::from("bc");
+        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_false() {
+        let s = String::from("bc");
+        let ctx = String::from("d");
+        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn rctx_true_short() {
+        let s = String::from("bc");
+        let ctx = String::from("b");
+        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_false_start() {
+        let s = String::from("aabc");
+        let ctx = String::from("bc");
+        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn lctx_true() {
+        let s = String::from("bc");
+        let ctx = String::from("bc");
+        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+
+        assert!(res);
+    }
+
+    #[test]
+    fn lctx_false() {
+        let s = String::from("bc");
+        let ctx = String::from("d");
+        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn lctx_true_short() {
+        let s = String::from("abc");
+        let ctx = String::from("bc");
+        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+
+        assert!(res);
+    }
+
+    #[test]
+    fn lctx_false_start() {
+        let s = String::from("bca");
+        let ctx = String::from("c");
+        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+
+        assert!(!res);
+    }
+}
+
 impl Pattern {
     pub fn new(pat : char, r : String, p : f32, left : Option<String>, right : Option<String>) -> Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right }
+    }
+
+    fn rctx(it : Chars, ctx : &mut Chars) -> bool {
+        let mut cur = match ctx.next() {
+            Some(c) => c,
+            None => return true
+        };
+
+        for c in it {
+            if c == cur {
+                cur = match ctx.next() {
+                    Some(c) => c,
+                    None => return true
+                };
+            }
+            else {
+                return false;
+            }
+        }
+
+        false
+    }
+
+    fn lctx(it : Rev<Chars>, ctx : &mut Rev<Chars>) -> bool {
+        let mut cur = match ctx.next() {
+            Some(c) => c,
+            None => return true
+        };
+
+        for c in it {
+            if c == cur {
+                cur = match ctx.next() {
+                    Some(c) => c,
+                    None => return true
+                };
+            }
+            else {
+                return false;
+            }
+        }
+
+        false
     }
 
     pub fn test(&self, i : usize, s : String) -> bool {
