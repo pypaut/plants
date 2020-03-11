@@ -2,7 +2,8 @@ use crate::pattern;
 
 
 // Apply rules once from left to right on the given word.
-pub fn iterate(s : &str, patterns : &Vec<pattern::Pattern>) -> String {
+pub fn iterate(s : &str, patterns : &Vec<pattern::Pattern>,
+               ignored : &Vec<char>) -> String {
     let mut result = String::new();
 
     for i in 0..s.len() {

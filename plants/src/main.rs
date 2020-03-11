@@ -14,12 +14,13 @@ fn main() {
 
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
-    let rules = parse_rules::parse_rules(&rule_str);
+    let (rules, ignored) = parse_rules::parse_rules(&rule_str);
 
+    //println!("{:?}", rules);
     let mut res = axiom;
 
     for _i in 0..iterations {
-        res = iterate::iterate(&res, &rules);
+        res = iterate::iterate(&res, &rules, &ignored);
     }
 
     fs::write("result.txt", res).expect("Unable to write to 'result.txt' file");

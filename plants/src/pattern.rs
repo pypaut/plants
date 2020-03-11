@@ -1,26 +1,26 @@
 use rand::{thread_rng, Rng};
 
-
+#[derive(Debug)]
 pub struct Pattern {
     pub pattern : char,       // Initial character
     pub replacement : String, // Replacement string
     pub p : f32,               // Replacement probability
-    pub left : char,          // Left context
-    pub right : char,         // Right context
+    pub left : Option<String>,          // Left context
+    pub right : Option<String>,         // Right context
 }
 
 impl Pattern {
-    pub fn new(pat : char, r : String, p : f32, left : char, right : char) -> Pattern {
-        Pattern{pattern: pat, replacement: r, p: p, left: left, right: right}
+    pub fn new(pat : char, r : String, p : f32, left : Option<String>, right : Option<String>) -> Pattern {
+        Pattern{pattern: pat, replacement: r, p, left, right }
     }
 
     pub fn test(&self, i : usize, s : String) -> bool {
 
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
-            if (self.left == ' ') && (self.right == ' ') {  // No context
+            //if (self.left == ' ') && (self.right == ' ') {  // No context
                 s.chars().nth(i).unwrap() == self.pattern
-            }
+            /*}
             else if (self.left != ' ') && (self.right != ' ') {  // Both contexts
                 if i <= 0 || i >= s.len() - 1 {
                     false
@@ -52,7 +52,7 @@ impl Pattern {
             }
             else {
                 false
-            }
+            }*/
         }
         else {
             false
