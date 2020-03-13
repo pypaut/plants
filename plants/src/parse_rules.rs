@@ -145,9 +145,9 @@ fn create_rule(line : &SepLine) -> pattern::Pattern {
 }
 
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str) -> (Vec<pattern::Pattern>, Vec<char>) {
+pub fn parse_rules(data : &str) -> (Vec<pattern::Pattern>, String) {
     let mut result = Vec::new();
-    let mut ignored : Vec<char> = Vec::new();
+    let mut ignored : String = String::new();
 
     for l in data.lines() {
         //println!("{}", l);
@@ -158,9 +158,7 @@ pub fn parse_rules(data : &str) -> (Vec<pattern::Pattern>, Vec<char>) {
                 match line.line_type {
                     LineType::Context => {
                         if line.tokens[0] == String::from("ignore") {
-                            for c in line.tokens[1].chars() {
-                                ignored.push(c);
-                            }
+                            ignored = line.tokens[1].clone();
                         }
                     },
                     LineType::Rule => {

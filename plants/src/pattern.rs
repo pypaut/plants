@@ -20,13 +20,15 @@ mod tests {
     fn test_rctx(s : &str, pat : &str) -> bool {
         let s = String::from(s);
         let ctx = String::from(pat);
-        Pattern::rctx(s.chars(), ctx.chars().borrow_mut())
+        Pattern::rctx(s.chars(), ctx.chars().borrow_mut(),
+                      &Vec::new())
     }
 
     fn test_lctx(s : &str, pat : &str) -> bool {
         let s = String::from(s);
         let ctx = String::from(pat);
-        Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut())
+        Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut(),
+                      &Vec::new())
     }
 
     #[test]
@@ -134,6 +136,7 @@ mod tests {
         assert!(res);
     }
 
+    #[test]
     fn rctx_bracket_cmp_branch_complex() {
         let res = test_rctx("b[c[ae]kl]d", "b[c]d");
 
@@ -160,14 +163,14 @@ impl Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right }
     }
 
-    fn rctx(it : Chars, ctx : &mut Chars) -> bool {
+    fn rctx(it : Chars, ctx : &mut Chars, ignore : &str) -> bool {
         let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
         };
 
         let mut lvl = 0;
-        let mut pat_lvl = (if cur == '[' {1} else {0});
+        let mut pat_lvl = if cur == '[' {1} else {0};
 
         for c in it {
             if c == '[' {
@@ -176,7 +179,11 @@ impl Pattern {
             else if c == ']' {
                 lvl -= 1;
             }
-            if c == cur && lvl >= 0 && lvl == pat_lvl {
+            if ignore.contains(&c.to_string())
+            {
+                continue
+            }
+            else if c == cur && lvl >= 0 && lvl == pat_lvl {
                 cur = match ctx.next() {
                     Some(c) => c,
                     None => return true
@@ -201,7 +208,7 @@ impl Pattern {
         false
     }
 
-    fn lctx(it : Rev<Chars>, ctx : &mut Rev<Chars>) -> bool {
+    fn lctx(it : Rev<Chars>, ctx : &mut Rev<Chars>, ignore : &str) -> bool {
         let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
@@ -224,7 +231,7 @@ impl Pattern {
 
             //ignore branches that came before the current char
             //because they are not part of the left context
-            else if lvl <= min_lvl {
+            else if lvl <= min_lvl  && !ignore.contains(&c.to_string()) {
                 if c == cur {
                     cur = match ctx.next() {
                         Some(c) => c,
@@ -242,7 +249,7 @@ impl Pattern {
         false
     }
 
-    pub fn test(&self, i : usize, s : String) -> bool {
+    pub fn test(&self, i : usize, s : String, ignored : &str) -> bool {
 
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
@@ -254,13 +261,15 @@ impl Pattern {
             //if we have a left context, check the left context
             valid &= match &self.left {
                 Some(ctx) => Pattern::lctx(left_str.chars().rev(),
-                                                     ctx.chars().rev().borrow_mut()),
+                                                     ctx.chars().rev().borrow_mut(),
+                                           ignored),
                 None => true
             };
             //if we have a right context, check the right context
             valid &= match &self.right {
                 Some(ctx) => Pattern::rctx(right_str.chars(),
-                                                     ctx.chars().borrow_mut()),
+                                                     ctx.chars().borrow_mut(),
+                                           ignored),
                 None => true
             };
 

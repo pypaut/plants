@@ -17,6 +17,7 @@ fn main() {
     let (rules, ignored) = parse_rules::parse_rules(&rule_str);
 
     //println!("{:?}", rules);
+    //println!("{:?}", ignored);
     let mut res = axiom;
 
     for _i in 0..iterations {
