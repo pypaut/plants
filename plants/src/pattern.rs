@@ -1,6 +1,7 @@
 use rand::{thread_rng, Rng};
 use std::str::Chars;
 use std::iter::Rev;
+use core::borrow::BorrowMut;
 
 #[derive(Debug)]
 pub struct Pattern {
@@ -16,74 +17,139 @@ mod tests {
     use super::*;
     use std::borrow::BorrowMut;
 
+    fn test_rctx(s : &str, pat : &str) -> bool {
+        let s = String::from(s);
+        let ctx = String::from(pat);
+        Pattern::rctx(s.chars(), ctx.chars().borrow_mut())
+    }
+
+    fn test_lctx(s : &str, pat : &str) -> bool {
+        let s = String::from(s);
+        let ctx = String::from(pat);
+        Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut())
+    }
+
     #[test]
     fn rctx_true() {
-        let s = String::from("bc");
-        let ctx = String::from("bc");
-        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+        let res = test_rctx("bc", "bc");
 
         assert!(res);
     }
 
     #[test]
     fn rctx_false() {
-        let s = String::from("bc");
-        let ctx = String::from("d");
-        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+        let res = test_rctx("bc", "d");
 
         assert!(!res);
     }
 
     #[test]
     fn rctx_true_short() {
-        let s = String::from("bc");
-        let ctx = String::from("b");
-        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+        let res = test_rctx("bc", "b");
 
         assert!(res);
     }
 
     #[test]
     fn rctx_false_start() {
-        let s = String::from("aabc");
-        let ctx = String::from("bc");
-        let res = Pattern::rctx(s.chars(), ctx.chars().borrow_mut());
+        let res = test_rctx("aabc", "bc");
 
         assert!(!res);
     }
 
     #[test]
     fn lctx_true() {
-        let s = String::from("bc");
-        let ctx = String::from("bc");
-        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+        let res = test_lctx("bc", "bc");
 
         assert!(res);
     }
 
     #[test]
     fn lctx_false() {
-        let s = String::from("bc");
-        let ctx = String::from("d");
-        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+        let res = test_lctx("bc", "d");
 
         assert!(!res);
     }
 
     #[test]
     fn lctx_true_short() {
-        let s = String::from("abc");
-        let ctx = String::from("bc");
-        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+        let res = test_lctx("abc", "bc");
 
         assert!(res);
     }
 
     #[test]
     fn lctx_false_start() {
-        let s = String::from("bca");
-        let ctx = String::from("c");
-        let res = Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut());
+        let res = test_lctx("bca", "c");
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn lctx_bracket_true() {
+        let res = test_lctx("bc[abdhj[gfh]][", "bc");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn lctx_bracket_false() {
+        let res = test_lctx("bc[abdhj[gfh]][", "d");
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn rctx_bracket_neg_lvl_false() {
+        let res = test_rctx("b]c", "bc");
+
+        assert!(!res);
+    }
+
+    #[test]
+    fn rctx_bracket_true_simple() {
+        let res = test_rctx("b[]c", "bc");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_bracket_true_with_branch() {
+        let res = test_rctx("b[ae]c", "bc");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_bracket_cmp_branch() {
+        let res = test_rctx("b[c]d", "b[c]d");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_bracket_cmp_branch_multiple_levels() {
+        let res = test_rctx("b[c[ae]]d", "b[c]d");
+
+        assert!(res);
+    }
+
+    fn rctx_bracket_cmp_branch_complex() {
+        let res = test_rctx("b[c[ae]kl]d", "b[c]d");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_bracket_cmp_branch_complex_2() {
+        let res = test_rctx("b[c[ae]kl][vb]d", "b[c[a]][v]d");
+
+        assert!(res);
+    }
+
+    #[test]
+    fn rctx_bracket_cmp_branch_false() {
+        let res = test_rctx("b[c[ae]kl][vb]d", "b[c[aj]k][v]d");
 
         assert!(!res);
     }
@@ -100,15 +166,35 @@ impl Pattern {
             None => return true
         };
 
+        let mut lvl = 0;
+        let mut pat_lvl = (if cur == '[' {1} else {0});
+
         for c in it {
-            if c == cur {
+            if c == '[' {
+                lvl += 1;
+            }
+            else if c == ']' {
+                lvl -= 1;
+            }
+            if c == cur && lvl >= 0 && lvl == pat_lvl {
                 cur = match ctx.next() {
                     Some(c) => c,
                     None => return true
                 };
+                if cur == '[' {
+                    pat_lvl += 1;
+                }
+                else if cur == ']' {
+                    pat_lvl -= 1;
+                }
             }
             else {
-                return false;
+                if lvl >= 0 && (c == '[' || c == ']' || lvl != pat_lvl) {
+                    continue;
+                }
+                else {
+                    return false;
+                }
             }
         }
 
@@ -121,15 +207,35 @@ impl Pattern {
             None => return true
         };
 
+        let mut min_lvl = 0;//minimum level explored
+        let mut lvl = 0;//level of current context
+        //it should never go up
+
         for c in it {
-            if c == cur {
-                cur = match ctx.next() {
-                    Some(c) => c,
-                    None => return true
-                };
+            if c == '[' {
+                lvl -= 1;
+                if lvl < min_lvl {
+                    min_lvl = lvl;
+                }
+            }
+            else if c == ']' {
+                lvl += 1;
+            }
+
+            //ignore branches that came before the current char
+            //because they are not part of the left context
+            else if lvl <= min_lvl {
+                if c == cur {
+                    cur = match ctx.next() {
+                        Some(c) => c,
+                        None => return true
+                    };
+                } else {
+                    return false;
+                }
             }
             else {
-                return false;
+                continue;
             }
         }
 
@@ -141,40 +247,24 @@ impl Pattern {
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
-                s.chars().nth(i).unwrap() == self.pattern
-            /*}
-            else if (self.left != ' ') && (self.right != ' ') {  // Both contexts
-                if i <= 0 || i >= s.len() - 1 {
-                    false
-                }
-                else {
-                    //println!("s : {}, s.len() : {}, index : {}", s, s.len(), i);
-                    s.chars().nth(i-1).unwrap() == self.left
-                        && s.chars().nth(i).unwrap() == self.pattern
-                        && s.chars().nth(i+1).unwrap() == self.right
-                }
-            }
-            else if self.right != ' ' {  // Right context only
-                if i == s.len() - 1 {
-                    false
-                }
-                else {
-                    s.chars().nth(i).unwrap() == self.pattern
-                        && s.chars().nth(i+1).unwrap() == self.right
-                }
-            }
-            else if self.left != ' ' {  // Left context only
-                if i == 0 {
-                    false
-                }
-                else {
-                    s.chars().nth(i).unwrap() == self.pattern
-                        && s.chars().nth(i-1).unwrap() == self.left
-                }
-            }
-            else {
-                false
-            }*/
+            let mut valid = s.chars().nth(i).unwrap() == self.pattern;
+            //partition string in left and right part
+            let left_str : String = s.chars().take(i).collect();
+            let right_str : String = s.chars().skip(i + 1).collect();
+            //if we have a left context, check the left context
+            valid &= match &self.left {
+                Some(ctx) => Pattern::lctx(left_str.chars().rev(),
+                                                     ctx.chars().rev().borrow_mut()),
+                None => true
+            };
+            //if we have a right context, check the right context
+            valid &= match &self.right {
+                Some(ctx) => Pattern::rctx(right_str.chars(),
+                                                     ctx.chars().borrow_mut()),
+                None => true
+            };
+
+            valid
         }
         else {
             false
