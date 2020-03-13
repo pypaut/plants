@@ -37,11 +37,12 @@ impl Segment {
         ).normalized()
     }
 
-    pub fn collinear(&self, s : Segment) -> bool {
+    pub fn collinear(&self, s : Segment, epsilon : f64) -> bool {
         let self_dir : Vector3 = self.build_dir();
         let s_dir : Vector3 = s.build_dir();
 
-        self_dir.dot(s_dir) == 1.0
+        let prod = self_dir.dot(s_dir);
+        prod >= 1.0 - epsilon && prod <= 1 + epsilon
     }
 }
 
