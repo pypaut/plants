@@ -170,5 +170,6 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
         };
     }
 
+    result.sort_by(|a, b| a.cmp_pat(b));
     (result, ignored)
 }
