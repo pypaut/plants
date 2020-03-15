@@ -34,6 +34,23 @@ impl Vector3 {
     pub fn z(&self) -> &f64 {  // z getter
         &self.z
     }
+
+    pub fn norm(&self) -> f64 {
+        (self.x.powi(2) + self.y.powi(2) + self.z.powi(2)).sqrt()
+    }
+
+    pub fn times(&self, a : f64) -> Vector3 {
+        Vector3::new(self.x * a, self.y * a, self.z * a)
+    }
+
+    pub fn normalized(&self) -> Vector3 {
+        self.times(1.0 / self.norm())
+    }
+
+    pub fn dot(&self, v : Vector3) -> f64 {
+        let dot = self.x * v.x + self.y * v.y + self.z * v.z;
+        dot
+    }
 }
 
 impl Mul<f64> for Vector3 {

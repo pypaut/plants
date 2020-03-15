@@ -9,15 +9,11 @@ use mesh::Mesh;
 use vector3::Vector3;
 
 
+#[derive(Clone, Copy)]
 pub struct Segment {
     pub a : Turtle,
     pub b : Turtle,
-    pub width : f64
-}
-
-#[derive(Clone)]
-pub struct Leaf {
-    pub pts : Vec<Vector3>
+    pub width : f64,
 }
 
 impl Segment {
@@ -32,6 +28,27 @@ impl Segment {
     pub fn width(&self) -> f64 {
         self.width
     }
+
+    pub fn build_dir(&self) -> Vector3 {
+        Vector3::new(
+            self.b.pos().x() - self.a.pos().x(),
+            self.b.pos().y() - self.a.pos().y(),
+            self.b.pos().z() - self.a.pos().z(),
+        ).normalized()
+    }
+
+    pub fn collinear(&self, s : Segment, epsilon : f64) -> bool {
+        let self_dir : Vector3 = self.build_dir();
+        let s_dir : Vector3 = s.build_dir();
+
+        let prod = self_dir.dot(s_dir);
+        prod >= 1.0 - epsilon && prod <= 1 + epsilon
+    }
+}
+
+#[derive(Clone)]
+pub struct Leaf {
+    pub pts : Vec<Vector3>
 }
 
 
@@ -86,7 +103,31 @@ pub fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) 
         }
     }
 
-    (segments, leaves)
+    (process_segments(segments), leaves)
+}
+
+
+fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
+    let mut new_segments : Vec<Segment> = Vec::new();
+
+    let mut i = 0;
+    while i < segments.len() {
+        let mut j = 1;
+        while i + j < segments.len() && segments[i].collinear(segments[i + j]) {
+            j += 1;
+        }
+
+        new_segments.push(
+            Segment{
+                            a : segments[i].a(),
+                            b : segments[i+j-1].b(),
+                            width : segments[i].width()
+            }
+        );
+        i += j;
+    }
+
+    new_segments
 }
 
 pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>) -> Mesh {
