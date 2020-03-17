@@ -80,5 +80,3 @@ impl Sub for Vector3 {
             z: self.z - rhs.z}
     }
 }
-
-

@@ -1,7 +1,9 @@
-use rand::{thread_rng, Rng};
-use std::str::Chars;
-use std::iter::Rev;
 use core::borrow::BorrowMut;
+use rand::{thread_rng, Rng};
+use std::cmp::Ordering::{Less, Equal, Greater};
+use std::cmp::Ordering;
+use std::iter::Rev;
+use std::str::Chars;
 
 #[derive(Debug)]
 pub struct Pattern {
@@ -277,6 +279,37 @@ impl Pattern {
         }
         else {
             false
+        }
+    }
+
+    // Sort list from contexted to context free.
+    pub fn cmp_pat(&self, pat : &Pattern) -> Ordering {
+        if self.left == None && self.right == None {  // 2 None
+            if pat.left != None || pat.right != None {  // 0-1 None
+                Greater
+            }
+            else {  // pat.left == None && pat.right == None  // 2 None
+                Equal
+            }
+        }
+        else if self.left == None || self.right == None {  // 1 None
+            if pat.left == None && pat.right == None {  // 2 None
+                Less
+            }
+            else if pat.left == None || pat.right == None {  // 1 None
+                Equal
+            }
+            else {  // pat.left != None && pat.right != None  // 0 None
+                Greater
+            }
+        }
+        else {  // self.left != None && self.right != None  // 0 None
+            if pat.left != None && pat.right != None {  // 0 None
+                Equal
+            }
+            else {  // 1-2 None
+                Less
+            }
         }
     }
 }

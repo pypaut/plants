@@ -1,4 +1,4 @@
-use crate::pattern;
+use crate::pattern::Pattern;
 use std::iter::FromIterator;
 
 #[derive(Debug)]
@@ -123,7 +123,7 @@ fn tokenize(line : &str) -> Option<SepLine> {
     }
 }
 
-fn create_rule(line : &SepLine) -> pattern::Pattern {
+fn create_rule(line : &SepLine) -> Pattern {
     let mut left : Option<String> = None;
     let mut right : Option<String> = None;
     let mut p : f32 = 1.0;
@@ -141,11 +141,11 @@ fn create_rule(line : &SepLine) -> pattern::Pattern {
         }
     }
 
-    pattern::Pattern::new(pattern, replacement, p, left, right)
+    Pattern::new(pattern, replacement, p, left, right)
 }
 
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str) -> (Vec<pattern::Pattern>, String) {
+pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
     let mut result = Vec::new();
     let mut ignored : String = String::new();
 
@@ -170,5 +170,6 @@ pub fn parse_rules(data : &str) -> (Vec<pattern::Pattern>, String) {
         };
     }
 
+    result.sort_by(|a, b| a.cmp_pat(b));
     (result, ignored)
 }
