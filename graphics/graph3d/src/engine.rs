@@ -44,6 +44,13 @@ impl Segment {
         let prod = self_dir.dot(s_dir);
         prod >= 1.0 - epsilon && prod <= 1.0 + epsilon
     }
+
+    pub fn size_eq(&self, s : &Segment, epsilon : f64) -> bool {
+        let s1 = self.width;
+        let s2 = s.width;
+
+        s1 >= s2 - epsilon && s1 <= s2 + epsilon
+    }
 }
 
 #[derive(Clone)]
@@ -122,7 +129,8 @@ fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
     let mut i = 0;
     while i < segments.len() {
         let mut j = 1;
-        while i + j < segments.len() && segments[i].collinear(segments[i + j], 0.001) {
+        while i + j < segments.len() && segments[i].collinear(segments[i + j], 0.001)
+            && segments[i].size_eq(&segments[i + j], 0.001) {
             j += 1;
         }
 
