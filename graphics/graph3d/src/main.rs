@@ -12,11 +12,32 @@ mod vector3;
 
 fn main() {
     // Parse arguments
-    let args : Vec<String> = env::args().collect();
-    let input = args[1].clone();
-    let output = args[2].clone();
-    let angle = args[3].parse::<f64>().expect("Failed while parsing angle.");
-    let dist = args[4].parse::<f64>().expect("Failed while parsing distance.");
+    let mut args = env::args();
+    args.next();
+    let input = args.next()
+        .expect("usage: ./graph3d input output [angle] [dist] [reason] [min_d] [max_d]")
+        .clone();
+    println!("{}", input);
+    let output = args.next()
+        .expect("Not enough arguments.")
+        .clone();
+    let angle = args.next()
+        .unwrap_or(String::from("22.5"))
+        .parse::<f64>()
+        .expect("Invalid value for angle");
+    let dist = args.next()
+        .unwrap_or(String::from("1.0"))
+        .parse::<f64>()
+        .expect("Invalid value for distance.");
+    let reason_d = args.next()
+        .unwrap_or(String::from("0.8"))
+        .parse::<f64>().expect("Invalid value for reason");
+    let min_d = args.next()
+        .unwrap_or(String::from("0.1"))
+        .parse::<f64>().expect("Invalid value for min_d.");
+    let max_d = args.next()
+        .unwrap_or(String::from("0.5"))
+        .parse::<f64>().expect("Invalid value for max_d.");
 
     // Read file and get string
     let in_str = fs::read_to_string(input)
@@ -24,7 +45,8 @@ fn main() {
 
     // Generate segments
     let (segments, leaves) = engine::read_str(&in_str,
-                                      dist, angle * (PI / 180.0));
+                                      dist, angle * (PI / 180.0), (min_d, max_d),
+                                              reason_d);
 
     // Generate & print geometry
     let mesh = engine::gen_geometry(segments, leaves);
