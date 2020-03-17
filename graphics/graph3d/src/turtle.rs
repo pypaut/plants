@@ -22,6 +22,15 @@ impl Turtle {
         size: 1.0}
     }
 
+    pub fn new_param(pos: vector3::Vector3, heading: vector3::Vector3,
+        left: vector3::Vector3, up: vector3::Vector3, size: f64) -> Turtle {
+        Turtle{pos,
+            heading,
+            left,
+            up,
+            size}
+    }
+
     pub fn pos(&self) -> vector3::Vector3 {
         self.pos
     }
@@ -39,6 +48,8 @@ impl Turtle {
     }
 
     pub fn size(&self) -> f64 {self.size}
+
+    pub fn left(&self) -> vector3::Vector3 {self.left}
 
     pub fn decrease(&mut self, reason: f64) {
         self.size *= reason;

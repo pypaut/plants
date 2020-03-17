@@ -126,10 +126,16 @@ fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
             j += 1;
         }
 
+        let end_turtle = Turtle::new_param( segments[i + j - 1].b().pos(),
+                                            segments[i].a().heading(),
+                                            segments[i].a().left(),
+                                            segments[i].a().up(),
+                                            segments[i].a().size());
+
         new_segments.push(
             Segment{
                             a : segments[i].a(),
-                            b : segments[i+j-1].b(),
+                            b : end_turtle,
                             width : segments[i].width()
             }
         );
