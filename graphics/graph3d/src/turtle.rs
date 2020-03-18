@@ -8,7 +8,8 @@ pub struct Turtle {
     pos: vector3::Vector3,
     heading: vector3::Vector3,
     left: vector3::Vector3,
-    up: vector3::Vector3
+    up: vector3::Vector3,
+    size: f64//size [0, 1]
 }
 
 impl Turtle {
@@ -17,7 +18,8 @@ impl Turtle {
         Turtle{pos: vector3::Vector3::new(0f64, 0f64, 0f64),
         heading: vector3::Vector3::new(0f64, 0f64, 1f64),
         left: vector3::Vector3::new(0f64, -1f64, 0f64),
-        up: vector3::Vector3::new(1f64, 0f64, 0f64)}
+        up: vector3::Vector3::new(1f64, 0f64, 0f64),
+        size: 1.0}
     }
 
     pub fn pos(&self) -> vector3::Vector3 {
@@ -34,6 +36,12 @@ impl Turtle {
 
     pub fn forward(&mut self, dist: f64) {
         self.pos = self.pos + self.heading * dist;
+    }
+
+    pub fn size(&self) -> f64 {self.size}
+
+    pub fn decrease(&mut self, reason: f64) {
+        self.size *= reason;
     }
 
     pub fn rot_pitch(&mut self, a: f64) {  // y

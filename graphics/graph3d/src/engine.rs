@@ -42,7 +42,14 @@ impl Segment {
         let s_dir : Vector3 = s.build_dir();
 
         let prod = self_dir.dot(s_dir);
-        prod >= 1.0 - epsilon && prod <= 1 + epsilon
+        prod >= 1.0 - epsilon && prod <= 1.0 + epsilon
+    }
+
+    pub fn size_eq(&self, s : &Segment, epsilon : f64) -> bool {
+        let s1 = self.width;
+        let s2 = s.width;
+
+        s1 >= s2 - epsilon && s1 <= s2 + epsilon
     }
 }
 
@@ -52,13 +59,19 @@ pub struct Leaf {
 }
 
 
-pub fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) {
+pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64) -> (Vec<Segment>, Vec<Leaf>) {
+    if d_reason > 1.0 {
+        panic!("Invalid reason.");
+    }
+
     let mut t = Turtle::new();
     let mut stack : Vec<Turtle> = Vec::with_capacity(10);
     let mut leaf_mode = 0;  // If true, we are creating a leaf
 
     let mut segments : Vec<Segment> = Vec::new();
     let mut leaves : Vec<Leaf> = Vec::new();
+
+    let max_d_delta = d_limits.1 - d_limits.0;//max - min
 
     let mut tmp_leaf = Leaf{pts: Vec::new()};
     let it = s.chars();
@@ -73,7 +86,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) 
                 let a = t.clone();
                 t.forward(dist);
                 let b = t.clone();
-                segments.push(Segment{a, b, width : dist / 2.0});
+                segments.push(Segment{a, b, width : d_limits.0 + t.size() * max_d_delta});
             },  // Place two points
             'f' => {
                 if leaf_mode > 0 {
@@ -98,7 +111,10 @@ pub fn read_str(s : &str, dist : f64, angle : f64) -> (Vec<Segment>, Vec<Leaf>) 
                     leaves.push(tmp_leaf.clone());
                     tmp_leaf = Leaf{pts: Vec::new()};
                 }
-                },
+            },
+            '!' => {
+                t.decrease(d_reason);
+            },
             _ => {}  // Do nothing on unknown char
         }
     }
@@ -113,7 +129,8 @@ fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
     let mut i = 0;
     while i < segments.len() {
         let mut j = 1;
-        while i + j < segments.len() && segments[i].collinear(segments[i + j]) {
+        while i + j < segments.len() && segments[i].collinear(segments[i + j], 0.001)
+            && segments[i].size_eq(&segments[i + j], 0.001) {
             j += 1;
         }
 
