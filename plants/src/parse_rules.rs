@@ -1,5 +1,9 @@
 use crate::pattern::Pattern;
 use std::iter::FromIterator;
+use crate::lexer::{lexer, TokenType};
+use std::collections::VecDeque;
+use std::borrow::Borrow;
+use std::ptr::Unique;
 
 #[derive(Debug)]
 enum LineType {
@@ -25,102 +29,38 @@ struct SepLine {
     tok_types : Vec<TokType>
 }
 
-fn separate(line : &str, sep : char) -> (Option<String>, &str) {
-    let split : Vec<&str> = line.splitn(2, sep).collect();
-
-    //we need to consider the left context
-    if split.len() == 2 {
-        (Some(String::from(split[0].trim())), split[1].trim())
-    }
-    else {
-        (None, line.trim())
-    }
+struct AstNode {
+    data : String,
+    children : Vec<Box<AstNode>>,
+    node_type : TokenType
 }
 
-fn tokenize(line : &str) -> Option<SepLine> {
-    let mut chars = line.chars();
+fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> Option<Box<AstNode>> {
 
-    //split at space, strip and return
-    let first = match chars.next() {
-        Some(c) => c,
-        None => return None
+}
+
+fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> Option<Box<AstNode>> {
+
+}
+
+fn parse(s : String) -> Option<Box<AstNode>> {
+    let tokens = lexer(&s);
+    let mut result = Box(Unique(AstNode{data: String::new(), children: Vec::new(),
+        node_type: TokenType::Rule}));
+
+    let tok = &tokens[0];
+    if tok.toktype != TokenType::Word {
+        panic!("Expected Word.");
+    }
+
+    match  lctx(&tokens, 0) {
+        //create a lctx token and add it to children of the main mode
+        Some(ctx) => {},
+        //we don't have a lctx node, the first word is the pattern
+        None => ()
     };
-    if first == '#' {
-        let line = String::from_iter(chars);
-        let split : Vec<&str> = line.split(' ').collect();
-        if split.len() < 2 {
-            None
-        }
-        else {
-            let line_type = LineType::Context;
-            let tokens : Vec<String> = split.iter()
-                .map(|x| String::from(x.trim()))
-                .collect();
 
-            let mut tok_types = vec![TokType::Ctx];
-            for _i in 1..tokens.len() {
-                tok_types.push(TokType::CtxArg);
-            }
-            Some(SepLine{line_type, tokens, tok_types})
-        }
-    }
-    else {//reset iterator, split at '<', '>' and ':', strip and return
-        let mut tokens : Vec<String> = Vec::new();
-        let mut tok_types : Vec<TokType> = Vec::new();
-
-        //separate pattern from replacement and probability
-        let (tok, line) = separate(line, ':');
-        let pattern = match tok {
-            Some(tok) => {
-                tok
-            }
-            None => {
-                panic!("Error while parsing rule.");
-            }
-        };
-
-        //separate replacement from probability
-        let (tok, line) = separate(line, ':');
-        match tok {
-            Some(tok) => {
-                tokens.push(tok);
-                tok_types.push(TokType::Prob);
-                tokens.push(String::from(line));
-                tok_types.push(TokType::Replacement);
-            },
-            None => {
-                tokens.push(String::from(line));
-                tok_types.push(TokType::Replacement);
-            }
-        };
-
-        //separate left context
-        let (tok, line) = separate(&pattern, '<');
-        match tok {
-            Some(tok) => {
-                tokens.push(tok);
-                tok_types.push(TokType::Lctx);
-            },
-            None => ()
-        };
-
-        //separate right context and pattern
-        let (tok, line) = separate(line, '>');
-        match tok {
-            Some(tok) => {
-                tokens.push(tok);
-                tok_types.push(TokType::Pattern);
-                tokens.push(String::from(line));
-                tok_types.push(TokType::Rctx);
-            },
-            None => {
-                tokens.push(String::from(line));
-                tok_types.push(TokType::Pattern);
-            }
-        };
-
-        Some(SepLine{line_type: LineType::Rule, tokens, tok_types})
-    }
+    None
 }
 
 fn create_rule(line : &SepLine) -> Pattern {

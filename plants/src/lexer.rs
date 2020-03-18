@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 
-pub enum TokenType {
+/*pub enum TokenType {
     Rule,
     Lctx,
     Rctx,
@@ -26,16 +26,76 @@ pub enum TokenType {
     Preproc,
     PreprocStart,
     Param,
+}*/
+
+pub enum TokenType {
+    General(GeneralToken),
+    Preproc(PreprocToken),
+    Rule(RuleToken)
+}
+
+pub enum GeneralToken {
+    Ws,//whitespace
+    Err,//error value
+    Char,//any character that is not a separator or keyword
+    Letter//any letter (upper and lower case)
+}
+
+pub enum PreprocToken {
+    PreprocStart,
+    Param,
+    Word
+}
+
+pub enum RuleToken {
+    Rule,
+    Pat,
+    Pword,
+    Lctx,
+    Rctx,
+    Cond,
+    Prob,
+    PatSep,
+    LpSep,
+    RpSep,
+    Lsep,
+    Rsep,
 }
 
 pub struct Token {
-    toktype : TokenType,
-    val : String,
+    pub toktype : TokenType,
+    pub val : String,
 }
 
+pub struct Lexer {
+    data : String,//remaining data to read
+    last : Token,//last extracted token
+    consume : bool//indicate if the next peek has to read a new token
+}
 
+impl Lexer {
+    pub fn New(data : String) -> Lexer {
+        Lexer{data, last: Token{toktype: TokenType::General(GeneralToken::Err), val: String::new()},
+            consume: true}
+    }
 
+    //peek next token, can be called many times, does not consume token
+    pub fn peek(&mut self) -> &Token {
+        if self.consume {
+            //consume a new token and return it
+        }
+        else {
+            //return the last token
+        }
 
+        self.consume = false;
+    }
+
+    //consume
+    pub fn consume(&mut self) {
+        self.consume = true;
+    }
+}
 
 pub fn lexer(rules : &str) -> VecDeque<Token> {
     let mut tokens : VecDeque<Token> = VecDeque::new();
