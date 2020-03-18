@@ -4,6 +4,7 @@ use std::fs;
 mod pattern;
 mod iterate;
 mod parse_rules;
+mod lexer;
 
 
 fn main() {
