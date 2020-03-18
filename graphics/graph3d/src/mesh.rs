@@ -1,10 +1,11 @@
 use crate::vector3;
 
 
+#[derive(Clone)]
 pub struct Mesh {
     verts : Vec<vector3::Vector3>,
     triangles : Vec<usize>,
-    leaf_faces : Vec<Vec<usize>>
+    leaf_faces : Vec<Vec<usize>>,
 }
 
 impl Mesh {
