@@ -1,11 +1,10 @@
 use std::collections::VecDeque;
 
 
-/*pub enum TokenType {
+pub enum TokenType {
     Rule,
     Lctx,
     Rctx,
-    Replace,
     Patsep,
     Lsep,
     Rsep,
@@ -16,85 +15,22 @@ use std::collections::VecDeque;
     Lpsep,
     Rpsep,
     Prob,
-    LsepProb,
-    RsepProb,
-    Left,
-    Right,
     Pat,
     ParamWord,
     Word,
     Preproc,
     PreprocStart,
     Param,
-}*/
-
-pub enum TokenType {
-    General(GeneralToken),
-    Preproc(PreprocToken),
-    Rule(RuleToken)
-}
-
-pub enum GeneralToken {
-    Ws,//whitespace
-    Err,//error value
-    Char,//any character that is not a separator or keyword
-    Letter//any letter (upper and lower case)
-}
-
-pub enum PreprocToken {
-    PreprocStart,
-    Param,
-    Word
-}
-
-pub enum RuleToken {
-    Rule,
-    Pat,
-    Pword,
-    Lctx,
-    Rctx,
-    Cond,
-    Prob,
-    PatSep,
-    LpSep,
-    RpSep,
-    Lsep,
-    Rsep,
+    Ws,
+    Char,
+    Letter,
+    Number,
+    Err
 }
 
 pub struct Token {
     pub toktype : TokenType,
     pub val : String,
-}
-
-pub struct Lexer {
-    data : String,//remaining data to read
-    last : Token,//last extracted token
-    consume : bool//indicate if the next peek has to read a new token
-}
-
-impl Lexer {
-    pub fn New(data : String) -> Lexer {
-        Lexer{data, last: Token{toktype: TokenType::General(GeneralToken::Err), val: String::new()},
-            consume: true}
-    }
-
-    //peek next token, can be called many times, does not consume token
-    pub fn peek(&mut self) -> &Token {
-        if self.consume {
-            //consume a new token and return it
-        }
-        else {
-            //return the last token
-        }
-
-        self.consume = false;
-    }
-
-    //consume
-    pub fn consume(&mut self) {
-        self.consume = true;
-    }
 }
 
 pub fn lexer(rules : &str) -> VecDeque<Token> {
@@ -108,34 +44,56 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
         while i < line.len() {
             added_to_word = false;
             if line.chars().nth(i)  == Some('<') {
-                tokens.push_back(Token{toktype : TokenType::Lsep, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Lsep, val : String::from("<")});
             } else if line.chars().nth(i) == Some('>') {
-                tokens.push_back(Token{toktype : TokenType::Rsep, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Rsep, val : String::from(">")});
             } else if line.chars().nth(i) == Some('(') {
-                tokens.push_back(Token{toktype : TokenType::LsepParam, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::LsepParam, val : String::from("(")});
             } else if line.chars().nth(i) == Some(')') {
-                tokens.push_back(Token{toktype : TokenType::RsepParam, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::RsepParam, val : String::from(")")});
             } else if line.chars().nth(i) == Some('[') {
-                tokens.push_back(Token{toktype : TokenType::LsepProb, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Lpsep, val : String::from("[")});
             } else if line.chars().nth(i) == Some(']') {
-                tokens.push_back(Token{toktype : TokenType::RsepProb, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Rpsep, val : String::from("]")});
             } else if line.chars().nth(i) == Some(':') {
-                tokens.push_back(Token{toktype : TokenType::Condsep, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Condsep, val : String::from(":")});
             } else if line.chars().nth(i) == Some('#') {
-                tokens.push_back(Token{toktype : TokenType::PreprocStart, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::PreprocStart, val : String::from("#")});
             } else if line.chars().nth(i) == Some('-') && line.chars().nth(i+1) == Some('>') {
-                tokens.push_back(Token{toktype : TokenType::Patsep, val : String::from("")});
+                tokens.push_back(Token{toktype : TokenType::Patsep, val : String::from("->")});
                 i += 1;
-            } else {
-                if line.chars().nth(i) != Some(' ') {
-                    word.push(line.chars().nth(i).unwrap());
-                    added_to_word = true;
+            } else if line.chars().nth(i) == Some(' ') || line.chars().nth(i) == Some('\n') {
+                tokens.push_back(Token{toktype : TokenType::Ws,
+                    val : line.chars().nth(i).unwrap().to_string()});
+            } else if line.chars().nth(i).unwrap().is_digit(10) {
+                let mut dot = false;
+                //while we have something to read and we are reading digits or a dot
+                let mut c = line.chars().nth(i).unwrap();
+                let mut s = String::new();
+                while i < line.len() && (c.is_digit(10)
+                    || (c == '.' && !dot)) {
+                    s.push(c);
+                    if c == '.' {
+                        dot = true;
+                    }
+                    i += 1;
+                    if i < line.len() {
+                        c = line.chars().nth(i).unwrap();
+                    }
                 }
-            }
 
-            if !added_to_word {  // Last word is done
-                tokens.push_back(Token{toktype : TokenType::Word, val : word});
-                word = String::from("");
+                tokens.push_back(Token{toktype: TokenType::Number,
+                    val : s});
+            } else {
+                let val = line.chars().nth(i).unwrap();
+                if val.is_alphabetic() {
+                    tokens.push_back(Token{toktype : TokenType::Char,
+                        val : val.to_string()});
+                }
+                else {
+                    tokens.push_back(Token{toktype : TokenType::Char,
+                        val : val.to_string()});
+                }
             }
 
             i += 1;

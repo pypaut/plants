@@ -3,7 +3,7 @@ use std::iter::FromIterator;
 use crate::lexer::{lexer, TokenType};
 use std::collections::VecDeque;
 use std::borrow::Borrow;
-use std::ptr::Unique;
+use crate::lexer::TokenType::ParamWord;
 
 #[derive(Debug)]
 enum LineType {
@@ -35,32 +35,149 @@ struct AstNode {
     node_type : TokenType
 }
 
-fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> Option<Box<AstNode>> {
+type AstRet = ((Option<Box<AstNode>>, usize))
+
+fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 
 }
 
-fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> Option<Box<AstNode>> {
+fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
+    if tokens[index].toktype != TokenType::Char && tokens[index].toktype != TokenType::Letter {
+        return (None, index)
+    }
 
+    let mut i = index;
+    let mut result = AstNode{data: String::new(),
+        children: vec!(Box::new(AstNode{data: tokens[index].val, children: Vec::new(),
+        node_type: TokenType::Word})),
+    node_type: TokenType::ParamWord};
+    //create an ast node with first child being the word and second child the parameter
+
+    i += 1;
+    //check if there is a parameter
+    if tokens[i].toktype == TokenType::LsepParam {
+        let (w, i) = word(tokens, i);
+        match w {
+            Some(w) => {
+                w.node_type = TokenType::Param;
+                result.children.push(w);
+            },
+            None => {}
+        };
+
+        //check closing separator
+        if tokens[i].toktype != TokenType::RsepParam {
+            return (None, index);
+        }
+    }
+
+    (Some(Box::new(result)), i)
+}
+
+fn prob() -> AstRet {
+    let mut i = index;
+    if tokens[i].toktype != TokenType::Lpsep {
+        return (None, index);
+    }
+
+    i += 1;
+    if tokens[i].toktype != TokenType::Number {
+        return (None, index);
+    }
+
+    let ret = AstNode{data: tokens[i].val, children: Vec::new(), node_type: TokenType::Prob};
+
+    i += 1;
+
+    if tokens[i].toktype != TokenType::Rpsep {
+        return (None, index);
+    }
+
+    (Some(Box::new(ret)), i)
+}
+
+//word rule: letter+
+fn word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
+    let mut res_str = String::new();
+
+    let mut i = index;
+    while tokens[i].toktype == TokenType::Letter {
+        res_str.push_str(tokens[i].val);
+    }
+
+    if res_str.len() > 0 {
+        (Some(Box::new(AstNode{data: res_str, children: Vec::new(),
+            node_type: TokenType::Word})), i)
+    }
+    else {
+        (None, index)
+    }
+}
+
+//pattern rule: char+
+fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+}
+
+fn param(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut res_str = String::new();
+
+    let mut i = index;
+    while tokens[i].toktype != TokenType::Ws {
+        res_str.push_str(tokens[i].val);
+    }
+
+    if res_str.len() > 0 {
+        (Some(Box::new(AstNode{data: res_str, children: Vec::new(),
+            node_type: TokenType::Param})), i)
+    }
+    else {
+        (None, index)
+    }
+}
+
+fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    if tokens[index].toktype != TokenType::PreprocStart {
+        return (None, index);
+    }
+    i += 1;
+
+    let mut result = match word(tokens, index + 1) {
+        (Some(w), j) => {w.node_type = TokenType::Preproc;
+            i = j;
+            w
+        }
+        (None, _) => {return (None, index);}
+    };
+
+    let mut valid = true;
+    while valid {
+        if tokens[i].toktype == TokenType::Ws {
+            i += 1;
+        }
+        else {
+            valid = false;
+            break;
+        }
+
+        match param(tokens, i) {
+            (Some(p), j) => {result.children.push(p); i = j}
+            (None, _) => {break;}
+        }
+    }
+
+    if valid {
+        (Result, i)
+    }
+    else {
+        (None, index)
+    }
 }
 
 fn parse(s : String) -> Option<Box<AstNode>> {
     let tokens = lexer(&s);
-    let mut result = Box(Unique(AstNode{data: String::new(), children: Vec::new(),
-        node_type: TokenType::Rule}));
-
-    let tok = &tokens[0];
-    if tok.toktype != TokenType::Word {
-        panic!("Expected Word.");
-    }
-
-    match  lctx(&tokens, 0) {
-        //create a lctx token and add it to children of the main mode
-        Some(ctx) => {},
-        //we don't have a lctx node, the first word is the pattern
-        None => ()
-    };
-
-    None
+    let mut result = Box::new(AstNode{data: String::new(), children: Vec::new(),
+        node_type: TokenType::Rule});
 }
 
 fn create_rule(line : &SepLine) -> Pattern {
