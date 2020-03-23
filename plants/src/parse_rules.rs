@@ -1,9 +1,8 @@
 use crate::pattern::Pattern;
 use std::iter::FromIterator;
-use crate::lexer::{lexer, TokenType};
+use crate::lexer::{self, TokenType, Token};
 use std::collections::VecDeque;
 use std::borrow::Borrow;
-use crate::lexer::TokenType::ParamWord;
 
 #[derive(Debug)]
 enum LineType {
@@ -35,12 +34,44 @@ struct AstNode {
     node_type : TokenType
 }
 
-type AstRet = ((Option<Box<AstNode>>, usize))
+type AstRet = ((Option<Box<AstNode>>, usize));
 
+//lctx: pat '<'
 fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
+    let mut i = index;
+    let result = match pat(tokens, index) {
+        (Some(p), j) => {i = j; p.node_type = TokenType::Lctx;
+        p},
 
+        (None, _) => {return (None, index);}
+    };
+
+    if tokens[i].toktype != TokenType::Lsep {
+        return (None, index);
+    }
+
+    i += 1;
+    (Some(result), i)
 }
 
+//rctx: '>' pat
+fn rctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
+    let mut i = index;
+    if tokens[i].toktype != TokenType::Rsep {
+        return (None, index);
+    }
+
+    i += 1;
+    let result = match pat(tokens, index) {
+        (Some(p), j) => {i = j; p.node_type = TokenType::Rctx;
+        p},
+        (None, _) => {return (None, index);}
+    };
+
+    (Some(result), i)
+}
+
+//p_word: char ['(' word ')']
 fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     if tokens[index].toktype != TokenType::Char && tokens[index].toktype != TokenType::Letter {
         return (None, index)
@@ -74,7 +105,8 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     (Some(Box::new(result)), i)
 }
 
-fn prob() -> AstRet {
+//prob: '[' number ']'
+fn prob(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     let mut i = index;
     if tokens[i].toktype != TokenType::Lpsep {
         return (None, index);
@@ -85,7 +117,7 @@ fn prob() -> AstRet {
         return (None, index);
     }
 
-    let ret = AstNode{data: tokens[i].val, children: Vec::new(), node_type: TokenType::Prob};
+    let ret = AstNode{data: tokens[i].val.clone(), children: Vec::new(), node_type: TokenType::Prob};
 
     i += 1;
 
@@ -96,13 +128,13 @@ fn prob() -> AstRet {
     (Some(Box::new(ret)), i)
 }
 
-//word rule: letter+
+//word: letter+
 fn word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     let mut res_str = String::new();
 
     let mut i = index;
     while tokens[i].toktype == TokenType::Letter {
-        res_str.push_str(tokens[i].val);
+        res_str.push_str(&tokens[i].val);
     }
 
     if res_str.len() > 0 {
@@ -114,16 +146,38 @@ fn word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     }
 }
 
-//pattern rule: char+
+//pattern: p_word+
 fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    let mut result = match p_word(tokens, i) {
+        //create the root and add the child
+        (Some(tree), j) => {i = j; AstNode{
+            data: String::new(),
+            children: vec![tree],
+            node_type: TokenType::Pat
+        }},
+        //just return
+        (None, _) => {return (None, index);}
+    };
+
+    //loop until the next token is not a p_word
+    loop {
+        match p_word(tokens, i) {
+            (Some(tree), j) => {i = j; result.children.push(tree);}
+            (None, _) => {break;}
+        };
+    }
+
+    (Some(Box::new(result)), index)
 }
 
+//param: any+ ws
 fn param(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     let mut res_str = String::new();
 
     let mut i = index;
     while tokens[i].toktype != TokenType::Ws {
-        res_str.push_str(tokens[i].val);
+        res_str.push_str(&tokens[i].val);
     }
 
     if res_str.len() > 0 {
@@ -135,6 +189,7 @@ fn param(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     }
 }
 
+//preproc: preproc_start word ws param+
 fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     let mut i = index;
     if tokens[index].toktype != TokenType::PreprocStart {
@@ -167,7 +222,7 @@ fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     }
 
     if valid {
-        (Result, i)
+        (Some(result), i)
     }
     else {
         (None, index)
@@ -175,7 +230,7 @@ fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 }
 
 fn parse(s : String) -> Option<Box<AstNode>> {
-    let tokens = lexer(&s);
+    let tokens = lexer::lexer(&s);
     let mut result = Box::new(AstNode{data: String::new(), children: Vec::new(),
         node_type: TokenType::Rule});
 }
