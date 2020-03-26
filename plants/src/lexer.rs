@@ -8,8 +8,8 @@ pub enum TokenType {
     Patsep,
     Lsep,
     Rsep,
-    LsepParam,
-    RsepParam,
+    Lpara,
+    Rpara,
     Condsep,
     Cond,
     Lpsep,
@@ -25,6 +25,14 @@ pub enum TokenType {
     Char,
     Letter,
     Number,
+    Anum,
+    Apara,
+    AexpMul,
+    Aexp,
+    CompExp,
+    CondBool,
+    CondPara,
+    CondAnd,
     Err
 }
 
@@ -48,9 +56,9 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
             } else if line.chars().nth(i) == Some('>') {
                 tokens.push_back(Token{toktype : TokenType::Rsep, val : String::from(">")});
             } else if line.chars().nth(i) == Some('(') {
-                tokens.push_back(Token{toktype : TokenType::LsepParam, val : String::from("(")});
+                tokens.push_back(Token{toktype : TokenType::Lpara, val : String::from("(")});
             } else if line.chars().nth(i) == Some(')') {
-                tokens.push_back(Token{toktype : TokenType::RsepParam, val : String::from(")")});
+                tokens.push_back(Token{toktype : TokenType::Rpara, val : String::from(")")});
             } else if line.chars().nth(i) == Some('[') {
                 tokens.push_back(Token{toktype : TokenType::Lpsep, val : String::from("[")});
             } else if line.chars().nth(i) == Some(']') {
@@ -87,7 +95,7 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
             } else {
                 let val = line.chars().nth(i).unwrap();
                 if val.is_alphabetic() {
-                    tokens.push_back(Token{toktype : TokenType::Char,
+                    tokens.push_back(Token{toktype : TokenType::Letter,
                         val : val.to_string()});
                 }
                 else {

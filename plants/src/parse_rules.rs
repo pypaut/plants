@@ -86,7 +86,7 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 
     i += 1;
     //check if there is a parameter
-    if tokens[i].toktype == TokenType::LsepParam {
+    if tokens[i].toktype == TokenType::Lpara {
         let (w, i) = word(tokens, i);
         match w {
             Some(w) => {
@@ -97,7 +97,7 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
         };
 
         //check closing separator
-        if tokens[i].toktype != TokenType::RsepParam {
+        if tokens[i].toktype != TokenType::Rpara {
             return (None, index);
         }
     }
@@ -228,6 +228,106 @@ fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
         (None, index)
     }
 }
+
+//B_exp := '!' B_exp | B_exp '|' B_exp_and | B_exp_and
+fn cond(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//B_exp_and := B_exp_and '&' B_para | B_para
+fn cond_and(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//B_para := '(' B_exp ')' | Bool
+fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//Bool := 'true' | 'false' | Comp_exp
+fn cond_bool(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//Comp_exp := A_exp Comp_op A_exp
+fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//Comp_op := '=' | '!=' | '>' | '<' | '>=' | '<='
+//in lexer
+
+//A_exp := A_exp '+' A_exp_mul | A_exp_mul
+fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+
+}
+
+//test if token i  is a multiplication or division token
+//differenciate between the two operators when creating the ast for evaluating the condition
+fn mul_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    if tokens[index].toktype == TokenType::Char {
+        if tokens[index].val == '/'.to_string() || tokens[index].val == '*'.to_string() {
+            //return the token with the correct type
+        }
+    }
+}
+
+//A_exp_mul := A_exp_mul '*' A_para | A_para
+fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    let mut ret = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::AexpMul};
+
+    match A_para(tokens, index) {
+        (Some(para), j) => {i = j; ret.children.push(para)},
+        (None, _) => {return (None, index);}
+    };
+
+    loop {
+        if tokens[i].toktype !=
+    }
+}
+
+//A_para := '(' A_exp ')' | Num
+fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    if tokens[i].toktype != TokenType::Lpara {
+        match a_num(tokens, i) {
+            (Some(n), j) => {n.node_type = TokenType::Apara; (Some(n), j)},
+            (None, _) => (None, index)
+        }
+    }
+    else {
+        i += 1;
+        let tmp = match a_exp(tokens, i) {
+            (Some(e), j) => {i = j; e.node_type = TokenType::Apara;
+                (Some(e), j)},
+            (None, _) => (None, index)
+        };
+
+        if tokens[i].toktype != TokenType::Rpara {
+            (None, index)
+        }
+        else {
+            tmp
+        }
+    }
+}
+
+//Num := 0|...|9 | 0 Num | ... | 9 Num | Var
+fn a_num(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    if tokens[i].toktype == TokenType::Number {
+        (Some(Box::new(AstNode{data: tokens[i].val.clone(), children: Vec::new(),
+        node_type: TokenType::Anum})), i + 1)
+    }
+    else {
+        match word(tokens, i) {
+            (Some(w), j) => {w.toktype = TokenType::Anum; (Some(w), j)},
+            (None, _) => (None, index)
+        }
+    }
+}
+
 
 fn parse(s : String) -> Option<Box<AstNode>> {
     let tokens = lexer::lexer(&s);
