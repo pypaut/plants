@@ -16,3 +16,7 @@ test3:
 test4:
 	./target/debug/plants FFF ../tests/rules4.txt 10
 	python3 ../graphics/src/2d.py result.txt 22.5
+
+test5:
+	./target/debug/plants A ../tests/rules5.txt 6
+	../graphics/graph3d/target/debug/graph3d result.txt result 22.5 10 1 1 10
