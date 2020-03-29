@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-
+#[derive(PartialEq)]
 pub enum TokenType {
     Rule,
     Lctx,
@@ -33,6 +33,12 @@ pub enum TokenType {
     CondBool,
     CondPara,
     CondAnd,
+    Mul,
+    Add,
+    CompOp,
+    And,
+    Or,
+    Not,
     Err
 }
 
@@ -45,16 +51,32 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
     let mut tokens : VecDeque<Token> = VecDeque::new();
 
     for line in rules.lines() {
-        let mut word = String::from("");
-        let mut added_to_word = false;
         let mut i = 0;
 
         while i < line.len() {
-            added_to_word = false;
             if line.chars().nth(i)  == Some('<') {
-                tokens.push_back(Token{toktype : TokenType::Lsep, val : String::from("<")});
+                if line.chars().nth(i + 1) == Some('=') {
+                    tokens.push_back(Token{toktype: TokenType::CompOp,
+                        val: String::from("<=")});
+                    i += 1;
+                } else {
+                    tokens.push_back(Token { toktype: TokenType::Lsep,
+                        val: String::from("<") });
+                }
             } else if line.chars().nth(i) == Some('>') {
-                tokens.push_back(Token{toktype : TokenType::Rsep, val : String::from(">")});
+                if line.chars().nth(i + 1) == Some('=') {
+                    tokens.push_back(Token{toktype: TokenType::CompOp,
+                        val: String::from(">=")});
+                } else {
+                    tokens.push_back(Token { toktype: TokenType::Rsep,
+                        val: String::from(">") });
+                }
+            } else if line.chars().nth(i) == Some('='){
+                tokens.push_back(Token{toktype: TokenType::CompOp,
+                    val: String::from("=")});
+            } else if line.chars().nth(i) == Some('!') && line.chars().nth(i + 1) == Some('=') {
+                tokens.push_back(Token{toktype: TokenType::CompOp, val: String::from("!=")});
+                i += 1;
             } else if line.chars().nth(i) == Some('(') {
                 tokens.push_back(Token{toktype : TokenType::Lpara, val : String::from("(")});
             } else if line.chars().nth(i) == Some(')') {
