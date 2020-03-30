@@ -12,8 +12,7 @@ pub enum TokenType {
     Rpara,
     Condsep,
     Cond,
-    Lpsep,
-    Rpsep,
+    Psep,
     Prob,
     Pat,
     ParamWord,
@@ -83,10 +82,8 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
                 tokens.push_back(Token{toktype : TokenType::Lpara, val : String::from("(")});
             } else if line.chars().nth(i) == Some(')') {
                 tokens.push_back(Token{toktype : TokenType::Rpara, val : String::from(")")});
-            } else if line.chars().nth(i) == Some('[') {
-                tokens.push_back(Token{toktype : TokenType::Lpsep, val : String::from("[")});
-            } else if line.chars().nth(i) == Some(']') {
-                tokens.push_back(Token{toktype : TokenType::Rpsep, val : String::from("]")});
+            } else if line.chars().nth(i) == Some('@') {
+                tokens.push_back(Token{toktype : TokenType::Psep, val : String::from("@")});
             } else if line.chars().nth(i) == Some(':') {
                 tokens.push_back(Token{toktype : TokenType::Condsep, val : String::from(":")});
             } else if line.chars().nth(i) == Some('#') {
