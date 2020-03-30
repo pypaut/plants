@@ -1,6 +1,7 @@
 use crate::pattern::Pattern;
 use crate::lexer::{self, TokenType};
 use std::collections::VecDeque;
+use std::fmt;
 
 #[derive(Debug)]
 enum LineType {
@@ -32,6 +33,24 @@ struct AstNode {
     node_type : TokenType
 }
 
+impl AstNode {
+    fn print(&self, depth: usize) {
+        for _ in 0..depth {
+            print!("    ");
+        }
+
+        println!("{:?}: {}", self.node_type, self.data);
+
+        for c in &self.children {
+            c.print(depth + 1);
+        }
+    }
+}
+
+fn err(tok: &str, rule: &str, got: &lexer::Token) {
+    println!("{}: Expected token {}, got {:?}.", rule, tok, got.toktype);
+}
+
 type AstRet = (Option<Box<AstNode>>, usize);
 
 //lctx: pat '<'
@@ -44,10 +63,11 @@ fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
             p
         },
 
-        (None, _) => {return (None, index);}
+        (None, _) => {err("pat", "lctx", &tokens[i]);return (None, index);}
     };
 
     if tokens[i].toktype != TokenType::Lsep {
+        err("Lsep", "lctx", &tokens[i]);
         return (None, index);
     }
 
@@ -59,6 +79,7 @@ fn lctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 fn rctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     let mut i = index;
     if tokens[i].toktype != TokenType::Rsep {
+        err("Rsep", "rctx", &tokens[i]);
         return (None, index);
     }
 
@@ -66,7 +87,9 @@ fn rctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     let result = match pat(tokens, i) {
         (Some(mut p), j) => {i = j; p.node_type = TokenType::Rctx;
         p},
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("pat", "rctx", &tokens[i]);
+            return (None, index);}
     };
 
     (Some(result), i)
@@ -75,6 +98,7 @@ fn rctx(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 //p_word: char ['(' word ')']
 fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     if tokens[index].toktype != TokenType::Char && tokens[index].toktype != TokenType::Letter {
+        err("char|letter", "p_word", &tokens[index]);
         return (None, index)
     }
 
@@ -94,11 +118,14 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
                 w.node_type = TokenType::Param;
                 result.children.push(w);
             },
-            None => {}
+            None => {
+                err("word", "p_word", &tokens[i]);
+                return (None, index);}
         };
 
         //check closing separator
         if tokens[i].toktype != TokenType::Rpara {
+            err("Rpara", "p_word", &tokens[i]);
             return (None, index);
         }
     }
@@ -110,11 +137,13 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 fn prob(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     let mut i = index;
     if tokens[i].toktype != TokenType::Lpsep {
+        err("Lpsep", "prob", &tokens[i]);
         return (None, index);
     }
 
     i += 1;
     if tokens[i].toktype != TokenType::Number {
+        err("number", "prob", &tokens[i]);
         return (None, index);
     }
 
@@ -123,6 +152,7 @@ fn prob(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     i += 1;
 
     if tokens[i].toktype != TokenType::Rpsep {
+        err("Rpsep", "prob", &tokens[i]);
         return (None, index);
     }
 
@@ -144,6 +174,7 @@ fn word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
             node_type: TokenType::Word})), i)
     }
     else {
+        err("Letter", "word", &tokens[i]);
         (None, index)
     }
 }
@@ -159,7 +190,9 @@ fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             node_type: TokenType::Pat
         }},
         //just return
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("p_word", "pat", &tokens[i]);
+            return (None, index);}
     };
 
     //loop until the next token is not a p_word
@@ -188,6 +221,7 @@ fn param(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             node_type: TokenType::Param})), i)
     }
     else {
+        err("!Ws", "param", &tokens[i]);
         (None, index)
     }
 }
@@ -196,6 +230,7 @@ fn param(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     let mut i = index;
     if tokens[index].toktype != TokenType::PreprocStart {
+        err("PreprocStart", "preproc", &tokens[i]);
         return (None, index);
     }
     i += 1;
@@ -205,7 +240,9 @@ fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             i = j;
             w
         }
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("word", "preproc", &tokens[i]);
+            return (None, index);}
     };
 
     let mut valid = true;
@@ -240,10 +277,12 @@ fn not_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 children: Vec::new(), node_type: TokenType::Not})), index + 1)
         }
         else {
+            err("!", "not_tok", &tokens[index]);
             (None, index)
         }
     }
     else {
+        err("Char", "not_tok", &tokens[index]);
         (None, index)
     }
 }
@@ -256,10 +295,12 @@ fn or_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 children: Vec::new(), node_type: TokenType::Or})), index + 1)
         }
         else {
+            err("|", "or_tok", &tokens[index]);
             (None, index)
         }
     }
     else {
+        err("Char", "or_tok", &tokens[index]);
         (None, index)
     }
 }
@@ -281,7 +322,9 @@ fn cond(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             i = j;
             ret.children.push(and);
         },
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("cond_and", "cond", &tokens[i]);
+            return (None, index);}
     };
 
     loop {
@@ -295,7 +338,9 @@ fn cond(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 i = j;
                 ret.children.push(and);
             },
-            (None, _) => {return (None, index);}
+            (None, _) => {
+                err("cond_and", "cond", &tokens[i]);
+                return (None, index);}
         };
     }
 
@@ -316,10 +361,12 @@ fn and_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 children: Vec::new(), node_type: TokenType::And})), index + 1)
         }
         else {
+            err("&", "and_tok", &tokens[index]);
             (None, index)
         }
     }
     else {
+        err("Char", "and_tok", &tokens[index]);
         (None, index)
     }
 }
@@ -334,7 +381,9 @@ fn cond_and(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             i = j;
             ret.children.push(para);
         },
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("cond_para", "cond_and", &tokens[i]);
+            return (None, index);}
     };
 
     loop {
@@ -348,7 +397,9 @@ fn cond_and(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 i = j;
                 ret.children.push(para);
             },
-            (None, _) => {return (None, index);}
+            (None, _) => {
+                err("cond_para", "cond_and", &tokens[i]);
+                return (None, index);}
         };
     }
 
@@ -365,11 +416,13 @@ fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                 cond
             },
             (None, _) => {
+                err("cond", "cond_para", &tokens[i]);
                 return (None, index);
             }
         };
 
         if tokens[i].toktype != TokenType::Rpara {
+            err("Rpara", "cond_para", &tokens[i]);
             (None, index)
         } else {
             (Some(ret), i + 1)
@@ -380,7 +433,10 @@ fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             (Some(b), j) => {
                 (Some(b), j)
             },
-            (None, _) => (None, index)
+            (None, _) => {
+                err("cond_bool", "cond_para", &tokens[i]);
+                (None, index)
+            }
         }
     }
 }
@@ -401,7 +457,9 @@ fn cond_bool(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
                     i = j;
                     exp
                 },
-                (None, _) => {return (None, index);}
+                (None, _) => {
+                    err("comp_exp", "cond_bool", &tokens[i]);
+                    return (None, index);}
             }
         }
     };
@@ -415,13 +473,16 @@ fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     let mut res = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::CompExp};
     match a_exp(tokens, i) {
         (Some(exp), j) => {i = j; res.children.push(exp);},
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("a_exp", "comp_exp", &tokens[i]);
+            return (None, index);}
     }
 
     if tokens[i].toktype == TokenType::CompOp {
         res.data = tokens[i].val.clone();
     }
     else {
+        err("CompOp", "comp_exp", &tokens[i]);
         return (None, index)
     }
 
@@ -429,7 +490,10 @@ fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
     match a_exp(tokens, i) {
         (Some(exp), j) => {i = j; res.children.push(exp);},
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("a_exp", "comp_exp", &tokens[i]);
+            return (None, index);
+        }
     }
 
     (Some(Box::new(res)), i)
@@ -445,10 +509,12 @@ fn add_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             children: Vec::new(), node_type: TokenType::Add})), index + 1)
         }
         else {
+            err("+|-", "add_tok", &tokens[index]);
             (None, index)
         }
     }
     else {
+        err("Char", "add_tok", &tokens[index]);
         (None, index)
     }
 }
@@ -460,7 +526,10 @@ fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
     match a_exp_mul(tokens, i) {
         (Some(mul), j) => {i = j; ret.children.push(mul);},
-        (None, _) => {return (None, index)}
+        (None, _) => {
+            err("a_exp_mul", "a_exp", &tokens[i]);
+            return (None, index);
+        }
     };
 
     loop {
@@ -471,7 +540,10 @@ fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
         match a_exp_mul(tokens, i) {
             (Some(mul), j) => {i = j; ret.children.push(mul);},
-            (None, _) => {return (None, index);}
+            (None, _) => {
+                err("a_exp_mul", "a_exp", &tokens[i]);
+                return (None, index);
+            }
         };
     }
 
@@ -488,10 +560,12 @@ fn mul_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             children: Vec::new(), node_type: TokenType::Mul})), index + 1)
         }
         else {
+            err("/|*", "mul_tok", &tokens[index]);
             (None, index)
         }
     }
     else {
+        err("Char", "mul_tok", &tokens[index]);
         (None, index)
     }
 }
@@ -503,7 +577,10 @@ fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
     match a_para(tokens, i) {
         (Some(para), j) => {i = j; ret.children.push(para);},
-        (None, _) => {return (None, index);}
+        (None, _) => {
+            err("a_para", "a_exp_mul", &tokens[i]);
+            return (None, index);
+        }
     };
 
     loop {
@@ -514,7 +591,10 @@ fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
         match a_para(tokens, i) {
             (Some(para), j) => {i = j; ret.children.push(para);},
-            (None, _) => {return (None, index);}
+            (None, _) => {
+                err("a_para", "a_exp_mul", &tokens[i]);
+                return (None, index);
+            }
         };
     }
 
@@ -527,7 +607,10 @@ fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     if tokens[i].toktype != TokenType::Lpara {
         match a_num(tokens, i) {
             (Some(mut n), j) => {n.node_type = TokenType::Apara; (Some(n), j)},
-            (None, _) => (None, index)
+            (None, _) => {
+                err("a_num", "a_para", &tokens[i]);
+                (None, index)
+            }
         }
     }
     else {
@@ -535,10 +618,14 @@ fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
         let tmp = match a_exp(tokens, i) {
             (Some(mut e), j) => {i = j; e.node_type = TokenType::Apara;
                 (Some(e), j)},
-            (None, _) => (None, index)
+            (None, _) => {
+                err("a_exp", "a_para", &tokens[i]);
+                (None, index)
+            }
         };
 
         if tokens[i].toktype != TokenType::Rpara {
+            err("Rpara", "a_para", &tokens[i]);
             (None, index)
         }
         else {
@@ -557,17 +644,101 @@ fn a_num(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     else {
         match word(tokens, i) {
             (Some(mut w), j) => {w.node_type = TokenType::Anum; (Some(w), j)},
-            (None, _) => (None, index)
+            (None, _) => {
+                err("word|Number", "a_num", &tokens[i]);
+                (None, index)
+            }
         }
     }
 }
 
+//rule: [lctx] pat [rctx] [cond] [prob] patsep pat
+fn rule(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    let mut i = index;
+    let mut result = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::Rule};
 
-/*fn parse(s : String) -> Option<Box<AstNode>> {
+    match lctx(tokens, i) {
+        (Some(ctx), j) => {
+            i = j;
+            result.children.push(ctx);
+        },
+        _ => {}
+    };
+
+    match pat(tokens, i) {
+        (Some(mut p), j) => {
+            i = j;
+            p.node_type = TokenType::Pred;
+            result.children.push(p);
+        },
+        _ => {
+            err("pat", "rule", &tokens[i]);
+            return (None, index);
+        }
+    };
+
+    match rctx(tokens, i) {
+        (Some(ctx), j) => {
+            i = j;
+            result.children.push(ctx);
+        },
+        _ => {}
+    };
+
+    match cond(tokens, i) {
+        (Some(c), j) => {
+            i = j;
+            result.children.push(c);
+        },
+        _ => {}
+    };
+
+    match prob(tokens, i) {
+        (Some(p), j) => {
+            i = j;
+            result.children.push(p);
+        },
+        _ => {}
+    };
+
+    if tokens[i].toktype != TokenType::Patsep {
+        err("PatSep", "rule", &tokens[i]);
+        return (None, index);
+    }
+     i += 1;
+
+    match pat(tokens, i) {
+        (Some(mut p), j) => {
+            i = j;
+            p.node_type = TokenType::Replacement;
+            result.children.push(p);
+        },
+        _ => {
+            err("pat", "rule", &tokens[i]);
+        }
+    };
+
+    (Some(Box::new(result)), i)
+}
+
+//preproc | rule
+fn parse(s : &str) -> Option<Box<AstNode>> {
     let tokens = lexer::lexer(&s);
     let mut result = Box::new(AstNode{data: String::new(), children: Vec::new(),
         node_type: TokenType::Rule});
-}*/
+    match preproc(&tokens, 0) {
+        (Some(p), _) => Some(p),
+        _ => {
+            match rule(&tokens, 0) {
+                (Some(r), _) => Some(r),
+                _ => {
+                    err("preproc|rule", "parse", &tokens[0]);
+                    None
+                }
+            }
+        }
+    }
+}
 
 fn create_rule(line : &SepLine) -> Pattern {
     let mut left : Option<String> = None;
@@ -598,15 +769,16 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
     for l in data.lines() {
         //println!("{}", l);
         //println!("{:?}", tokenize(l));
-        let tokens = lexer::lexer(l);
-        let rule_ast = cond(&tokens, 0);
-        let _rule_ast = match rule_ast {
-            (Some(ast), _) => ast,
-            (None, _) => {
+        let rule_ast = parse(l);
+        let rule_ast = match rule_ast {
+            Some(ast) => ast,
+            None => {
                 println!("Invalid rule: {}", l);
                 return (Vec::new(), "".to_string());
             }
         };
+
+        rule_ast.print(0);
     }
 
     //result.sort_by(|a, b| a.cmp_pat(b));

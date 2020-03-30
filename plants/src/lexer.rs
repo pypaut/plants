@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub enum TokenType {
     Rule,
     Lctx,
@@ -39,6 +39,8 @@ pub enum TokenType {
     And,
     Or,
     Not,
+    Replacement,
+    Pred,
     Err
 }
 
