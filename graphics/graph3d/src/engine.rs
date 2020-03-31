@@ -109,7 +109,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_dist = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 let a = t.clone();
@@ -130,7 +130,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_dist = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.forward(new_dist);
@@ -142,7 +142,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_yaw(new_angle);
@@ -154,7 +154,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_yaw(-new_angle);
@@ -166,7 +166,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_pitch(new_angle);
@@ -178,7 +178,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_pitch(-new_angle);
@@ -190,7 +190,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_roll(new_angle);
@@ -202,7 +202,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
-                    i += e - 1;
+                    i = e;
                 }
 
                 t.rot_roll(-new_angle);
@@ -232,7 +232,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                     while e < len && (s.as_bytes()[e] as char) != ')' {
                         e += 1;
                     }
-                    i += e - 1;
+                    i = e;
                 }
             }
         }
