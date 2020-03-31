@@ -60,6 +60,17 @@ pub struct Leaf {
     pub color_i : i64
 }
 
+fn get_parameter(s : &str, i : usize, len : usize) -> (&str, usize) {
+    let mut e = i;
+    while e < len && (s.as_bytes()[e] as char) != ')' {
+        e += 1;
+    }
+
+    let parameter = &s[i..e];
+
+    (parameter, e)
+}
+
 
 pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64, nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>) {
     if d_reason > 1.0 {
@@ -96,14 +107,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_dist = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -124,14 +128,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_dist = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -143,14 +140,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -162,14 +152,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -181,14 +164,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -200,14 +176,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -219,14 +188,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
@@ -238,14 +200,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
                 // Check for ( parameter
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
-                    let mut e = i + 1;
-                    while e < len && (s.as_bytes()[e] as char) != ')' {
-                        e += 1;
-                    }
-
-                    let split1: Vec<&str> = s.split("(").collect();
-                    let split2: Vec<&str> = split1[1].split(')').collect();
-                    let parameter = split2[0];
+                    let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
                     i += e - 1;
                 }
