@@ -68,6 +68,7 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
                 if line.chars().nth(i + 1) == Some('=') {
                     tokens.push_back(Token{toktype: TokenType::CompOp,
                         val: String::from(">=")});
+                    i += 1;
                 } else {
                     tokens.push_back(Token { toktype: TokenType::Rsep,
                         val: String::from(">") });

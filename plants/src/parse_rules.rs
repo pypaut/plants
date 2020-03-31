@@ -115,16 +115,42 @@ fn p_word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
     i += 1;
     //check if there is a parameter
     if i < tokens.len() && tokens[i].toktype == TokenType::Lpara {
-        match word(tokens, i + 1) {
+        match a_exp(tokens, i + 1) {
             (Some(mut w), j) => {
                 i = j;
-                w.node_type = TokenType::Param;
-                result.children.push(w);
+                let tmp = AstNode{
+                    data: String::new(),
+                    children: vec![w],
+                    node_type: TokenType::Param
+                };
+                result.children.push(Box::new(tmp));
             },
             _ => {
                 //err("word", "p_word", &tokens[i]);
                 return (None, index);}
         };
+
+        loop {
+            if i >= tokens.len() || tokens[i].val != ','.to_string() {
+                break;
+            }
+            i += 1;
+
+            match a_exp(tokens, i) {
+                (Some(mut w), j) => {
+                    i = j;
+                    let tmp = AstNode{
+                        data: String::new(),
+                        children: vec![w],
+                        node_type: TokenType::Param
+                    };
+                    result.children.push(Box::new(tmp));
+                },
+                _ => {
+                    //err("word", "p_word", &tokens[i]);
+                    return (None, index);}
+            };
+        }
 
         //check closing separator
         if i >= tokens.len() || tokens[i].toktype != TokenType::Rpara {
@@ -447,14 +473,16 @@ fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     //println!("Entering cond_para");
     let mut i = index;
     if i < tokens.len() && tokens[i].toktype == TokenType::Lpara {
-        let ret = match cond(tokens, i) {
+        let ret = match cond(tokens, i + 1) {
             (Some(cond), j) => {
                 i = j;
                 cond
             },
             (None, _) => {
                 //err("cond", "cond_para", &tokens[i]);
-                return (None, index);
+                //potentially a_para
+                let (b, j) = cond_bool(tokens, index);
+                return (b, j);
             }
         };
 
@@ -576,7 +604,10 @@ fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
     loop {
         match add_tok(tokens, i) {
-            (Some(_), j) => {i = j;},
+            (Some(a), j) => {
+                i = j;
+                ret.children.push(a);
+            },
             (None, _) => {break;}
         };
 
@@ -629,7 +660,10 @@ fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
     loop {
         match mul_tok(tokens, i) {
-            (Some(_), j) => {i = j;},
+            (Some(m), j) => {
+                i = j;
+                ret.children.push(m);
+            },
             (None, _) => {break;}
         };
 
@@ -661,11 +695,14 @@ fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     else {
         i += 1;
         let tmp = match a_exp(tokens, i) {
-            (Some(mut e), j) => {i = j; e.node_type = TokenType::Apara;
-                (Some(e), j)},
+            (Some(mut e), j) => {
+                i = j;
+                e.node_type = TokenType::Apara;
+                Some(e)
+            },
             (None, _) => {
                 //err("a_exp", "a_para", &tokens[i]);
-                (None, index)
+                None
             }
         };
 
@@ -674,7 +711,7 @@ fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             (None, index)
         }
         else {
-            tmp
+            (tmp, i + 1)
         }
     }
 }
