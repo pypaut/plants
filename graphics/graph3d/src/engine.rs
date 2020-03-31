@@ -60,6 +60,17 @@ pub struct Leaf {
     pub color_i : i64
 }
 
+fn get_parameter(s : &str, i : usize, len : usize) -> (&str, usize) {
+    let mut e = i;
+    while e < len && (s.as_bytes()[e] as char) != ')' {
+        e += 1;
+    }
+
+    let parameter = &s[i..e];
+
+    (parameter, e)
+}
+
 
 pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64, nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>) {
     if d_reason > 1.0 {
@@ -78,17 +89,31 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
     let max_d_delta = d_limits.1 - d_limits.0;//max - min
 
     let mut tmp_leaf = Leaf{pts: Vec::new(), color_i: current_color_i};
-    let it = s.chars();
-    for c in it {
+
+    let len = s.len();
+    let mut i = 0;
+
+    while i < len {
         // Read characters and add data to the output file
         // Characters:
         // - Basic movements in space: +-&^\/|fF
         // - Branches: [(push state)](pop state)
         // - Leaves: {(start polygon)}(end polygon)
-        match c {
+        // let mut b: u8 = s.as_bytes()[i];
+        // let c : char = b as char;
+        match s.as_bytes()[i] as char {
             'F' => {
+                let mut new_dist = dist as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_dist = parameter.parse().unwrap();
+                    i = e;
+                }
+
                 let a = t.clone();
-                t.forward(dist);
+                t.forward(new_dist);
                 let b = t.clone();
                 segments.push(
                     Segment{a, b, width : d_limits.0 + t.size() * max_d_delta, color_i: current_color_i}
@@ -98,20 +123,96 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 if leaf_mode > 0 {
                     tmp_leaf.pts.push(t.pos().clone());
                 }
-                t.forward(dist);
+
+                let mut new_dist = dist as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_dist = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.forward(new_dist);
             },  // Only move except if we are creating a leaf
-            '+' => {t.rot_yaw(angle);},
-            '-' => {t.rot_yaw(-angle);},
-            '&' => {t.rot_pitch(angle);},
-            '^' => {t.rot_pitch(-angle);},
-            '\\' => {t.rot_roll(angle);},
-            '/' => {t.rot_roll(-angle);},
+            '+' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_yaw(new_angle);
+            },
+            '-' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_yaw(-new_angle);
+            },
+            '&' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_pitch(new_angle);
+            },
+            '^' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_pitch(-new_angle);
+            },
+            '\\' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_roll(new_angle);
+            },
+            '/' => {
+                let mut new_angle = angle as f64;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    new_angle = parameter.parse().unwrap();
+                    i = e;
+                }
+
+                t.rot_roll(-new_angle);
+            },
             '|' => {t.rot_yaw(PI);},
             '[' => {stack.push(t.clone());},
             ']' => {t = stack.pop().unwrap_or(t);},
-            '{' => {leaf_mode += 1;},  // TODO: How can we manage leaves?
+            '{' => {leaf_mode = 1;},  // TODO: How can we manage leaves?
             '}' => {
-                leaf_mode -= 1;
+                leaf_mode = 0;
                 if leaf_mode == 0 {  // Ending a leaf
                     tmp_leaf.pts.push(t.pos().clone());
                     leaves.push(tmp_leaf.clone());
@@ -125,8 +226,18 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 current_color_i += 1;
                 current_color_i %= nb_colors;
             },
-            _ => {}  // Do nothing on unknown char
+            _ => {  // Unknown char : do nothing & ignore parameters, if any
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let mut e = i + 1;
+                    while e < len && (s.as_bytes()[e] as char) != ')' {
+                        e += 1;
+                    }
+                    i = e;
+                }
+            }
         }
+
+        i += 1;
     }
 
     (process_segments(segments), leaves)
