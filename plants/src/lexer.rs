@@ -94,7 +94,9 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
             } else if line.chars().nth(i) == Some(' ') || line.chars().nth(i) == Some('\n') {
                 tokens.push_back(Token{toktype : TokenType::Ws,
                     val : line.chars().nth(i).unwrap().to_string()});
-            } else if line.chars().nth(i).unwrap().is_digit(10) {
+            } else if line.chars().nth(i).unwrap().is_digit(10)
+                || line.chars().nth(i) == Some('-')
+                && line.chars().nth(i + 1).unwrap_or('-').is_digit(10) {
                 let mut dot = false;
                 //while we have something to read and we are reading digits or a dot
                 let mut c = line.chars().nth(i).unwrap();
@@ -113,6 +115,8 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
 
                 tokens.push_back(Token{toktype: TokenType::Number,
                     val : s});
+
+                i -= 1;//avoid consuming the next char
             } else {
                 let val = line.chars().nth(i).unwrap();
                 if val.is_alphabetic() {

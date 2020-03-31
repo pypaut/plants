@@ -190,7 +190,7 @@ fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             children: vec![tree],
             node_type: TokenType::Pat
         }},
-        //check if we have a char
+        //check if we have a char(probably redundant)
         (None, _) => {
             if i < tokens.len() {
                 match tokens[i].toktype {
@@ -301,6 +301,7 @@ fn preproc(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 }
 
 fn not_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering not_tok");
     if index < tokens.len() && tokens[index].toktype == TokenType::Char {
         if tokens[index].val == '!'.to_string() {
             //return the token with the correct type
@@ -319,6 +320,7 @@ fn not_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 }
 
 fn or_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering or_tok");
     if index < tokens.len() && tokens[index].toktype == TokenType::Char {
         if tokens[index].val == '|'.to_string() {
             //return the token with the correct type
@@ -338,6 +340,7 @@ fn or_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //B_exp := '!' B_exp | B_exp '|' B_exp_and | B_exp_and
 fn cond(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering cond");
     let mut i = index;
     let not = match not_tok(tokens, i) {
         (Some(_), j) => {
@@ -385,6 +388,7 @@ fn cond(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 }
 
 fn and_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering and_tok");
     if index < tokens.len() && tokens[index].toktype == TokenType::Char {
         if tokens[index].val == '&'.to_string() {
             //return the token with the correct type
@@ -404,6 +408,7 @@ fn and_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //B_exp_and := B_exp_and '&' B_para | B_para
 fn cond_and(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering cond_and");
     let mut i = index;
     let mut ret = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::CondAnd};
 
@@ -439,6 +444,7 @@ fn cond_and(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //B_para := '(' B_exp ')' | Bool
 fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering cond_para");
     let mut i = index;
     if i < tokens.len() && tokens[i].toktype == TokenType::Lpara {
         let ret = match cond(tokens, i) {
@@ -474,6 +480,7 @@ fn cond_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //Bool := 'true' | 'false' | Comp_exp
 fn cond_bool(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering cond_bool");
     let mut i = index;
     let ret = match word(tokens, i) {
         (Some(mut w), j)
@@ -500,6 +507,7 @@ fn cond_bool(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //Comp_exp := A_exp Comp_op A_exp
 fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering comp_exp");
     let mut i = index;
     let mut res = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::CompExp};
     match a_exp(tokens, i) {
@@ -509,7 +517,8 @@ fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
             return (None, index);}
     }
 
-    if i < tokens.len() && tokens[i].toktype == TokenType::CompOp {
+    if i < tokens.len() && tokens[i].toktype == TokenType::CompOp
+        || tokens[i].toktype == TokenType::Rsep || tokens[i].toktype == TokenType::Lsep {
         res.data = tokens[i].val.clone();
     }
     else {
@@ -534,6 +543,7 @@ fn comp_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 //in lexer
 
 fn add_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering add_tok");
     if index < tokens.len() && tokens[index].toktype == TokenType::Char {
         if tokens[index].val == '+'.to_string() || tokens[index].val == '-'.to_string() {
             (Some(Box::new(AstNode{data: tokens[index].val.clone(),
@@ -552,6 +562,7 @@ fn add_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //A_exp := A_exp '+' A_exp_mul | A_exp_mul
 fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering a_exp");
     let mut i = index;
     let mut ret = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::Aexp};
 
@@ -584,6 +595,7 @@ fn a_exp(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 //test if token i  is a multiplication or division token
 //differenciate between the two operators when creating the ast for evaluating the condition
 fn mul_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering mul_tok");
     if index < tokens.len() && tokens[index].toktype == TokenType::Char {
         if tokens[index].val == '/'.to_string() || tokens[index].val == '*'.to_string() {
             //return the token with the correct type
@@ -603,6 +615,7 @@ fn mul_tok(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //A_exp_mul := A_exp_mul '*' A_para | A_para
 fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering a_exp_mul");
     let mut i = index;
     let mut ret = AstNode{data: String::new(), children: Vec::new(), node_type: TokenType::AexpMul};
 
@@ -634,6 +647,7 @@ fn a_exp_mul(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
 
 //A_para := '(' A_exp ')' | Num
 fn a_para(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+    //println!("Entering a_para");
     let mut i = index;
     if i < tokens.len() && tokens[i].toktype != TokenType::Lpara {
         match a_num(tokens, i) {
@@ -717,13 +731,15 @@ fn rule(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
         _ => {}
     };
 
-    match cond(tokens, i) {
-        (Some(c), j) => {
-            i = j;
-            result.children.push(c);
-        },
-        _ => {}
-    };
+    if tokens[i].toktype == TokenType::Condsep {
+        match cond(tokens, i + 1) {
+            (Some(c), j) => {
+                i = j;
+                result.children.push(c);
+            },
+            _ => {}
+        };
+    }
 
     match prob(tokens, i) {
         (Some(p), j) => {
