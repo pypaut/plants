@@ -1,4 +1,5 @@
-use crate::pattern::Pattern;
+use crate::pattern::{self, Pattern};
+use crate::ast::AstNode;
 use crate::lexer::{self, TokenType};
 use std::collections::VecDeque;
 use std::fmt;
@@ -25,26 +26,6 @@ struct SepLine {
     line_type : LineType,
     tokens : Vec<String>,
     tok_types : Vec<TokType>
-}
-
-struct AstNode {
-    data : String,
-    children : Vec<Box<AstNode>>,
-    node_type : TokenType
-}
-
-impl AstNode {
-    fn print(&self, depth: usize) {
-        for _ in 0..depth {
-            print!("    ");
-        }
-
-        println!("{:?}: {}", self.node_type, self.data);
-
-        for c in &self.children {
-            c.print(depth + 1);
-        }
-    }
 }
 
 fn err(tok: &str, rule: &str, got: &lexer::Token) {
@@ -826,7 +807,7 @@ fn parse(s : &str) -> Option<Box<AstNode>> {
     }
 }
 
-fn create_rule(line : &SepLine) -> Pattern {
+/*fn create_rule(ast: AstNode) -> Pattern {
     let mut left : Option<String> = None;
     let mut right : Option<String> = None;
     let mut p : f32 = 1.0;
@@ -845,7 +826,7 @@ fn create_rule(line : &SepLine) -> Pattern {
     }
 
     Pattern::new(pattern, replacement, p, left, right)
-}
+}*/
 
 // Instantiate Pattern objects from a string.
 pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {

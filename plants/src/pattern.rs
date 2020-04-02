@@ -1,3 +1,4 @@
+use crate::ast::AstNode;
 use core::borrow::BorrowMut;
 use rand::{thread_rng, Rng};
 use std::cmp::Ordering::{Less, Equal, Greater};
@@ -5,13 +6,30 @@ use std::cmp::Ordering;
 use std::iter::Rev;
 use std::str::Chars;
 
+pub struct Symbol {
+    sym: char,
+    vars: Vec<String>,//variable names in param list
+    values: Vec<f32>//parameter values
+}
+
+pub struct SymbolString {
+    symbols: Vec<Symbol>
+}
+
+impl SymbolString {
+    //create a new SymbolString from a pattern ast
+    fn from_ast(ast: &AstNode) -> Result<SymbolString, ()> {
+
+    }
+}
+
 #[derive(Debug)]
 pub struct Pattern {
-    pub pattern : char,       // Initial character
-    pub replacement : String, // Replacement string
+    pub pattern : SymbolString,       // Initial character
+    pub replacement : SymbolString, // Replacement string
     pub p : f32,               // Replacement probability
-    pub left : Option<String>,          // Left context
-    pub right : Option<String>,         // Right context
+    pub left : Option<SymbolString>,          // Left context
+    pub right : Option<SymbolString>,         // Right context
 }
 
 #[cfg(test)]

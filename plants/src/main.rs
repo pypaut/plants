@@ -5,6 +5,7 @@ mod pattern;
 mod iterate;
 mod parse_rules;
 mod lexer;
+mod ast;
 
 
 fn main() {
