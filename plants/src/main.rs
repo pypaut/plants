@@ -6,6 +6,7 @@ mod iterate;
 mod parse_rules;
 mod lexer;
 mod ast;
+mod arith;
 
 
 fn main() {

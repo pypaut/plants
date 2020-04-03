@@ -1,4 +1,5 @@
 use crate::ast::AstNode;
+use crate::arith::{self};
 use core::borrow::BorrowMut;
 use rand::{thread_rng, Rng};
 use std::cmp::Ordering::{Less, Equal, Greater};
@@ -9,7 +10,7 @@ use std::str::Chars;
 pub struct Symbol {
     sym: char,
     vars: Vec<String>,//variable names in param list
-    values: Vec<f32>//parameter values
+    values: Vec<Box<dyn Arith>>//parameter values
 }
 
 pub struct SymbolString {
