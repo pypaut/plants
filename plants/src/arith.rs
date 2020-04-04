@@ -34,11 +34,11 @@ impl Arith for Var {
 }
 
 impl Var {
-    fn new_name(name: String) -> Box<Var> {
+    pub fn new_name(name: String) -> Box<Var> {
         Box::new(Var{name: Some(name), value: 0.0})
     }
 
-    fn new_value(value: f32) -> Box<Var> {
+    pub fn new_value(value: f32) -> Box<Var> {
         Box::new(Var{name: None, value})
     }
 }
@@ -49,11 +49,23 @@ pub struct ArithOp {
     operator: fn(f32, f32) -> f32
 }
 
-enum OpType {
+pub enum OpType {
     Add,
     Sub,
     Mul,
     Div
+}
+
+impl OpType {
+    pub fn from(s: &str) -> OpType {
+        match s {
+            "+" => OpType::Add,
+            "-" => OpType::Sub,
+            "*" => OpType::Mul,
+            "/" => OpType::Div,
+            _ => OpType::Add//error case, default to add
+        }
+    }
 }
 
 impl Arith for ArithOp {
@@ -84,7 +96,7 @@ impl Arith for ArithOp {
 }
 
 impl ArithOp {
-    fn new(op: OpType, left: Box<dyn Arith>, right: Box<dyn Arith>) -> Box<ArithOp> {
+    pub fn new(op: OpType, left: Box<dyn Arith>, right: Box<dyn Arith>) -> Box<ArithOp> {
         let fun = match op {
             OpType::Add => |x, y| {x + y},
             OpType::Sub => |x, y| {x - y},
