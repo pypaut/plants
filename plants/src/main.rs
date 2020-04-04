@@ -7,6 +7,8 @@ mod parse_rules;
 mod lexer;
 mod ast;
 mod arith;
+mod ast_to_arith;
+mod bool_exp;
 
 
 fn main() {

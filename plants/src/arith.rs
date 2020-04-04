@@ -1,12 +1,12 @@
 use std::borrow::Borrow;
 
-trait Arith {
+pub trait Arith {
     fn eval(&self) -> f32;
     fn vars(&self) -> Vec<&str>;
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()>;
 }
 
-struct Var {
+pub struct Var {
     name: Option<String>,
     value: f32
 }
@@ -43,7 +43,7 @@ impl Var {
     }
 }
 
-struct ArithOp {
+pub struct ArithOp {
     left: Box<dyn Arith>,
     right: Box<dyn Arith>,
     operator: fn(f32, f32) -> f32
@@ -93,4 +93,10 @@ impl ArithOp {
         };
         Box::new(ArithOp{left, right, operator: fun})
     }
+}
+
+pub trait ArithFactory {
+    type Exp;
+
+    fn create_from(exp: &self::Exp) -> Box<dyn Arith>;
 }
