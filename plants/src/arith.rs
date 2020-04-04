@@ -110,5 +110,5 @@ impl ArithOp {
 pub trait ArithFactory {
     type Exp;
 
-    fn create_from(exp: &self::Exp) -> Box<dyn Arith>;
+    fn create_from(exp: &self::Exp) -> Result<Box<dyn Arith>, &'static str>;
 }

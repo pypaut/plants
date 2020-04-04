@@ -6,7 +6,7 @@ pub trait BoolExp {
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()>;
 }
 
-enum BinOpType {
+pub enum BinOpType {
     And,
     Or
 }
@@ -43,7 +43,7 @@ impl BoolExp for BinOp {
 }
 
 impl BinOp {
-    fn new(op: BinOpType, left: Box<dyn BoolExp>, right: Box<dyn BoolExp>) -> Box<BinOp> {
+    pub fn new(op: BinOpType, left: Box<dyn BoolExp>, right: Box<dyn BoolExp>) -> Box<BinOp> {
         let fun = match op {
             BinOpType::And => |x, y| {x && y},
             BinOpType::Or => |x, y| {x || y}
@@ -53,7 +53,7 @@ impl BinOp {
     }
 }
 
-enum UnOpType {
+pub enum UnOpType {
     Not
 }
 
@@ -77,7 +77,7 @@ impl BoolExp for UnOp {
 }
 
 impl UnOp {
-    fn new(op: UnOpType, exp: Box<dyn BoolExp>) -> Box<UnOp> {
+    pub fn new(op: UnOpType, exp: Box<dyn BoolExp>) -> Box<UnOp> {
         let fun = match op {
             UnOpType::Not => |x| {!x}
         };
@@ -86,13 +86,27 @@ impl UnOp {
     }
 }
 
-enum CompType {
+pub enum CompType {
     Less,
     Greater,
     LessEq,
     GreaterEq,
     Equal,
     NotEqual
+}
+
+impl CompType {
+    fn from(s: &str) -> CompType {
+        match s {
+            "<" => CompType::Less,
+            ">" => CompType::Greater,
+            "<=" => CompType::LessEq,
+            ">=" => CompType::GreaterEq,
+            "=" => CompType::Equal,
+            "!=" => CompType::NotEqual,
+            _ => CompType::Less//error, use a default value
+        }
+    }
 }
 
 pub struct CompOp {
@@ -127,7 +141,7 @@ impl BoolExp for CompOp {
 }
 
 impl CompOp {
-    fn new(op: CompType, left: Box<dyn arith::Arith>, right: Box<dyn arith::Arith>) -> Box<CompOp> {
+    pub fn new(op: CompType, left: Box<dyn arith::Arith>, right: Box<dyn arith::Arith>) -> Box<CompOp> {
         let fun = match op {
             CompType::Less => |x, y| {x < y},
             CompType::Greater => |x, y| {x > y},
@@ -157,4 +171,10 @@ impl BoolExp for Bool {
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
         Err(())//no variable will be found ever, return an error
     }
+}
+
+pub trait BoolExpFactory {
+    type Exp;
+
+    fn create_from(exp: &self::Exp) -> Result<Box<dyn BoolExp>, &'static str>;
 }

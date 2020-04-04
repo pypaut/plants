@@ -2,7 +2,7 @@ use crate::arith::{self, Arith, ArithFactory};
 use crate::lexer::TokenType;
 use crate::ast::AstNode;
 
-impl ArithFactory for AstNode {
+impl ArithFactory for Arith {
     type Exp = AstNode;
 
     fn create_from(exp: &self::Exp) -> Result<Box<dyn Arith>, &'static str> {
@@ -12,7 +12,7 @@ impl ArithFactory for AstNode {
                     Err("Could not convert Aexp: No children.")
                 } else {
                     let mut left = ArithFactory::create_from(exp.children[0])?;
-                    if exp.children.len() % 2 == 0 {
+                    if exp.children.len() % 2 == 0 && exp.children.len() > 1 {
                         Err("Could not convert Aexp: Invalid number of children.")
                     } else {
                         for i in (1..exp.children.len()).step_by(2) {
