@@ -7,23 +7,6 @@ use std::cmp::Ordering;
 use std::iter::Rev;
 use std::str::Chars;
 
-pub struct Symbol {
-    sym: char,
-    vars: Vec<String>,//variable names in param list
-    values: Vec<Box<dyn Arith>>//parameter values
-}
-
-pub struct SymbolString {
-    symbols: Vec<Symbol>
-}
-
-impl SymbolString {
-    //create a new SymbolString from a pattern ast
-    fn from_ast(ast: &AstNode) -> Result<SymbolString, ()> {
-
-    }
-}
-
 #[derive(Debug)]
 pub struct Pattern {
     pub pattern : SymbolString,       // Initial character
