@@ -19,7 +19,7 @@ pub struct BinOp {
 
 impl BoolExp for BinOp {
     fn eval(&self) -> bool {
-        self.operator(self.left.eval(), self.right.eval())
+        (self.operator)(self.left.eval(), self.right.eval())
     }
 
     fn vars(&self) -> Vec<&str> {
@@ -43,10 +43,18 @@ impl BoolExp for BinOp {
 }
 
 impl BinOp {
-    pub fn new(op: BinOpType, left: Box<dyn BoolExp>, right: Box<dyn BoolExp>) -> Box<BinOp> {
+    fn and(x: bool, y: bool) -> bool {
+        x && y
+    }
+
+    fn or(x: bool, y: bool) -> bool {
+        x || y
+    }
+
+    pub fn new(op: &BinOpType, left: Box<dyn BoolExp>, right: Box<dyn BoolExp>) -> Box<BinOp> {
         let fun = match op {
-            BinOpType::And => |x, y| {x && y},
-            BinOpType::Or => |x, y| {x || y}
+            BinOpType::And => BinOp::and,
+            BinOpType::Or => BinOp::or
         };
 
         Box::new(BinOp{left, right, operator: fun})
@@ -64,7 +72,7 @@ pub struct UnOp {
 
 impl BoolExp for UnOp {
     fn eval(&self) -> bool {
-        self.operator(self.exp.eval())
+        (self.operator)(self.exp.eval())
     }
 
     fn vars(&self) -> Vec<&str> {
@@ -77,9 +85,13 @@ impl BoolExp for UnOp {
 }
 
 impl UnOp {
-    pub fn new(op: UnOpType, exp: Box<dyn BoolExp>) -> Box<UnOp> {
+    fn not(x: bool) -> bool {
+        !x
+    }
+
+    pub fn new(op: &UnOpType, exp: Box<dyn BoolExp>) -> Box<UnOp> {
         let fun = match op {
-            UnOpType::Not => |x| {!x}
+            UnOpType::Not => UnOp::not
         };
 
         Box::new(UnOp{exp, operator: fun})
@@ -96,7 +108,7 @@ pub enum CompType {
 }
 
 impl CompType {
-    fn from(s: &str) -> CompType {
+    pub fn from(s: &str) -> CompType {
         match s {
             "<" => CompType::Less,
             ">" => CompType::Greater,
@@ -117,7 +129,7 @@ pub struct CompOp {
 
 impl BoolExp for CompOp {
     fn eval(&self) -> bool {
-        self.operator(self.left.eval(), self.right.eval())
+        (self.operator)(self.left.eval(), self.right.eval())
     }
 
     fn vars(&self) -> Vec<&str> {
@@ -141,14 +153,38 @@ impl BoolExp for CompOp {
 }
 
 impl CompOp {
-    pub fn new(op: CompType, left: Box<dyn arith::Arith>, right: Box<dyn arith::Arith>) -> Box<CompOp> {
+    fn less(x: f32, y: f32) -> bool {
+        x < y
+    }
+
+    fn greater(x: f32, y: f32) -> bool {
+        x > y
+    }
+
+    fn less_eq(x: f32, y: f32) -> bool {
+        x <= y
+    }
+
+    fn greater_eq(x: f32, y: f32) -> bool {
+        x >= y
+    }
+
+    fn equal(x: f32, y: f32) -> bool {
+        x == y
+    }
+
+    fn not_equal(x: f32, y: f32) -> bool {
+        x != y
+    }
+
+    pub fn new(op: &CompType, left: Box<dyn arith::Arith>, right: Box<dyn arith::Arith>) -> Box<CompOp> {
         let fun = match op {
-            CompType::Less => |x, y| {x < y},
-            CompType::Greater => |x, y| {x > y},
-            CompType::LessEq => |x, y| {x <= y},
-            CompType::GreaterEq => |x, y| {x >= y},
-            CompType::Equal => |x, y| {x == y},
-            CompType::NotEqual => |x, y| {x != y}
+            CompType::Less => CompOp::less,
+            CompType::Greater => CompOp::greater,
+            CompType::LessEq => CompOp::less_eq,
+            CompType::GreaterEq => CompOp::greater_eq,
+            CompType::Equal => CompOp::equal,
+            CompType::NotEqual => CompOp::not_equal
         };
 
         Box::new(CompOp{left, right, operator: fun})
@@ -156,7 +192,7 @@ impl CompOp {
 }
 
 pub struct Bool {
-    value: bool
+    pub value: bool
 }
 
 impl BoolExp for Bool {
@@ -176,5 +212,5 @@ impl BoolExp for Bool {
 pub trait BoolExpFactory {
     type Exp;
 
-    fn create_from(exp: &self::Exp) -> Result<Box<dyn BoolExp>, &'static str>;
+    fn create_from(exp: &Self::Exp) -> Result<Box<dyn BoolExp>, &'static str>;
 }

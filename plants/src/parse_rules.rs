@@ -1,8 +1,10 @@
-use crate::pattern::{self, Pattern};
+use crate::pattern::{Pattern};
 use crate::ast::AstNode;
 use crate::lexer::{self, TokenType};
+use crate::symbolstring::SymbolString;
 use std::collections::VecDeque;
 use std::fmt;
+use crate::symbol::Symbol;
 
 #[derive(Debug)]
 enum LineType {
@@ -807,31 +809,43 @@ fn parse(s : &str) -> Option<Box<AstNode>> {
     }
 }
 
-/*fn create_rule(ast: AstNode) -> Pattern {
-    let mut left : Option<String> = None;
-    let mut right : Option<String> = None;
+fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
+    let mut left : Option<SymbolString> = None;
+    let mut right : Option<SymbolString> = None;
     let mut p : f32 = 1.0;
-    let mut pattern : char = ' ';
-    let mut replacement : String = String::new();
+    let mut pattern : SymbolString = SymbolString{ symbols: Vec::new() };
+    let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
+    let mut has_pattern : bool = false;
+    let mut has_replacement : bool = false;
 
-    for (i, tok) in line.tokens.iter().enumerate() {
-        match line.tok_types[i] {
-            TokType::Rctx => {right = Some(tok.to_string());},
-            TokType::Lctx => {left = Some(tok.to_string());},
-            TokType::Prob => {p = tok.parse::<f32>().unwrap()},
-            TokType::Pattern => {pattern = tok.chars().next().unwrap()},
-            TokType::Replacement => {replacement = tok.to_string()},
+    for tok in ast.children.iter() {
+        match tok.node_type {
+            TokenType::Rctx => {right = Some(SymbolString::from_ast(tok)?);},
+            TokenType::Lctx => {left = Some(SymbolString::from_ast(tok)?);},
+            TokenType::Prob => {p = tok.data.parse::<f32>().unwrap()},
+            TokenType::Pred => {
+                pattern = SymbolString::from_ast(tok)?;
+                has_pattern = true;
+            },
+            TokenType::Replacement => {
+                replacement = SymbolString::from_ast(tok)?;
+                has_replacement = true;
+            },
             _ => {}
-        }
+        };
     }
 
-    Pattern::new(pattern, replacement, p, left, right)
-}*/
+    if !has_pattern || !has_replacement {
+       Err("Rule is missing a pattern or replacement.")
+    } else {
+        Ok(Pattern::new(pattern, replacement, p, left, right))
+    }
+}
 
 // Instantiate Pattern objects from a string.
 pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
-    let result = Vec::new();
-    let ignored : String = String::new();
+    let mut result = Vec::new();
+    let mut ignored : String = String::new();
 
     for l in data.lines() {
         //println!("{}", l);
@@ -841,6 +855,14 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
             Some(ast) => {
                 ast.print(0);
                 //ast
+                match ast.node_type {
+                    TokenType::Rule => {match create_rule(ast) {
+                        Ok(r) => {result.push(r);},
+                        Err(_) => {}
+                    }},
+                    TokenType::Preproc => {},
+                    _ => {}
+                };
             },
             None => {
                 println!("Invalid rule: {}", l);
@@ -849,6 +871,7 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
         };
     }
 
-    //result.sort_by(|a, b| a.cmp_pat(b));
+    result.sort_by(|a, b| a.cmp_pat(b));
+    //println!("{:?}", result);
     (result, ignored)
 }

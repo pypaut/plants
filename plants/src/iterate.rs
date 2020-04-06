@@ -10,7 +10,7 @@ pub fn iterate(s : &str, patterns : &Vec<pattern::Pattern>,
         let mut found = false;
         for p in patterns.iter() {
             if p.test(i, s.to_string(), ignored) {
-                result.push_str(&p.replacement);
+                result.push_str(&p.replacement.to_string());
                 found = true;
                 break;
             }

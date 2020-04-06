@@ -24,11 +24,12 @@ impl Arith for Var {
     }
 
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
-        if self.name.borrow() == var {
-            self.value = val;
-            Ok(())
-        } else {
-            Err(())
+        match &self.name {
+            Some(v) if v == var => {
+                self.value = val;
+                Ok(())
+            },
+            _ => { Err(()) }
         }
     }
 }
@@ -70,7 +71,7 @@ impl OpType {
 
 impl Arith for ArithOp {
     fn eval(&self) -> f32 {
-        self.operator(self.left.eval(), self.right.eval())
+        (self.operator)(self.left.eval(), self.right.eval())
     }
 
     fn vars(&self) -> Vec<&str> {
@@ -96,12 +97,28 @@ impl Arith for ArithOp {
 }
 
 impl ArithOp {
-    pub fn new(op: OpType, left: Box<dyn Arith>, right: Box<dyn Arith>) -> Box<ArithOp> {
+    fn add(x: f32, y: f32) -> f32 {
+        x + y
+    }
+
+    fn sub(x: f32, y: f32) -> f32 {
+        x - y
+    }
+
+    fn mul(x: f32, y: f32) -> f32 {
+        x * y
+    }
+
+    fn div(x: f32, y: f32) -> f32 {
+        x / y
+    }
+
+    pub fn new(op: &OpType, left: Box<dyn Arith>, right: Box<dyn Arith>) -> Box<ArithOp> {
         let fun = match op {
-            OpType::Add => |x, y| {x + y},
-            OpType::Sub => |x, y| {x - y},
-            OpType::Mul => |x, y| {x * y},
-            OpType::Div => |x, y| {x / y}
+            OpType::Add => ArithOp::add,
+            OpType::Sub => ArithOp::sub,
+            OpType::Mul => ArithOp::mul,
+            OpType::Div => ArithOp::div
         };
         Box::new(ArithOp{left, right, operator: fun})
     }
@@ -110,5 +127,5 @@ impl ArithOp {
 pub trait ArithFactory {
     type Exp;
 
-    fn create_from(exp: &self::Exp) -> Result<Box<dyn Arith>, &'static str>;
+    fn create_from(exp: &Self::Exp) -> Result<Box<dyn Arith>, &'static str>;
 }

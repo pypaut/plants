@@ -1,13 +1,11 @@
-use crate::ast::AstNode;
-use crate::arith::{self};
 use core::borrow::BorrowMut;
 use rand::{thread_rng, Rng};
 use std::cmp::Ordering::{Less, Equal, Greater};
 use std::cmp::Ordering;
 use std::iter::Rev;
 use std::str::Chars;
+use crate::symbolstring::{SymbolString};
 
-#[derive(Debug)]
 pub struct Pattern {
     pub pattern : SymbolString,       // Initial character
     pub replacement : SymbolString, // Replacement string
@@ -16,7 +14,7 @@ pub struct Pattern {
     pub right : Option<SymbolString>,         // Right context
 }
 
-#[cfg(test)]
+/*#[cfg(test)]
 mod tests {
     use super::*;
     use std::borrow::BorrowMut;
@@ -160,10 +158,11 @@ mod tests {
 
         assert!(!res);
     }
-}
+}*/
 
 impl Pattern {
-    pub fn new(pat : char, r : String, p : f32, left : Option<String>, right : Option<String>) -> Pattern {
+    pub fn new(pat : SymbolString, r : SymbolString, p : f32,
+               left : Option<SymbolString>, right : Option<SymbolString>) -> Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right }
     }
 
@@ -255,10 +254,10 @@ impl Pattern {
 
     pub fn test(&self, i : usize, s : String, ignored : &str) -> bool {
 
-        let mut rng = thread_rng();
+        /*let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
-            let mut valid = s.chars().nth(i).unwrap() == self.pattern;
+            let mut valid = s.chars().nth(i).unwrap() == self.pattern.symbols[0].sym;
             //partition string in left and right part
             let left_str : String = s.chars().take(i).collect();
             let right_str : String = s.chars().skip(i + 1).collect();
@@ -281,12 +280,13 @@ impl Pattern {
         }
         else {
             false
-        }
+        }*/
+        false
     }
 
     // Sort list from contexted to context free.
     pub fn cmp_pat(&self, pat : &Pattern) -> Ordering {
-        if self.left == None && self.right == None {  // 2 None
+        /*if self.left == None && self.right == None {  // 2 None
             if pat.left != None || pat.right != None {  // 0-1 None
                 Greater
             }
@@ -312,6 +312,7 @@ impl Pattern {
             else {  // 1-2 None
                 Less
             }
-        }
+        }*/
+        Equal
     }
 }

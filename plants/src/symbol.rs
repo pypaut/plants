@@ -1,14 +1,14 @@
 use crate::arith;
-use crate::arith::Arith;
+use crate::arith::{Arith, ArithFactory};
+use crate::ast_to_arith;
 use crate::ast::AstNode;
 use crate::lexer::{lexer, TokenType};
-use crate::ast_to_arith;
-
+use crate::symbolstring::SymbolString;
 
 pub struct Symbol {
     pub sym: char,
     pub var_names : Vec<String>,
-    pub ariths : Vec<Box<dyn arith::Arith>>
+    pub params: Vec<Box<dyn arith::Arith>>
 }
 
 impl Symbol {
@@ -19,27 +19,33 @@ impl Symbol {
             if exp.children.is_empty() {
                 Err("No data for ast conversion to Symbol")
             } else {
-                let sym = exp.children[0].data;
-                let params = exp.children[1..].iter()
+                let sym = &exp.children[0].data;
+                let params: Vec<Box<dyn Arith>> = exp.children[1..].iter()
                     .filter_map(|x| {
                         if x.children.is_empty() {
                             None
                         } else {
                             Some(Arith::create_from(&x.children[0]))
                         }
-                    }).collect();
+                    }).map(|x| {x.unwrap()}).collect();
                 Ok(Symbol{sym: sym.chars().nth(0).unwrap(),
                     var_names: Vec::new(),
-                    ariths: params.copy()})
+                    params
+                })
             }
         }
     }
 
-    pub fn compute_var_names(&self) {
-        for arith in self.ariths {
+    pub fn compute_var_names(&mut self) {
+        //var names will be computed only once
+        if self.var_names.len() > 0 {
+            return;
+        }
+
+        for arith in &self.params {
             let vec = arith.vars();
             for var in vec {
-                self.var_names.push(var);
+                self.var_names.push(var.to_string());
             }
         }
         self.var_names.sort();
@@ -47,19 +53,45 @@ impl Symbol {
     }
 
     pub fn to_string(&self) -> String {
-        let mut res = c.to_string();
-        if var_names.len() == 0 {
+        let mut res = self.sym.to_string();
+        if self.params.len() == 0 {
             res
         } else {
-            res.push_back(&("(".to_string()));
+            res.push('(');
             // add values...
-            res.push_back(&(")".to_string()));
+            for p in &self.params {
+                res.push_str(&p.eval().to_string());
+                res.push(',');
+            }
+            res.pop();
+            res.push(')');
+            res
         }
-
-        res
     }
 
-    pub fn change_var(&self) {
+    pub fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
+        for mut p in &mut self.params {
+            p.set(var, val)?
+        }
 
+        Ok(())
+    }
+
+    //set variable at index i
+    pub fn set_i(&mut self, i: usize, val: f32) -> Result<(), ()> {
+        if i >= self.params.len() {
+            Err(())
+        } else {
+            let var = String::from({
+                let vars = self.params[i].vars();
+
+                if vars.len() == 1 {
+                    vars[0].clone()
+                } else {
+                    return Err(())
+                }
+            });
+            self.params[i].set(var.as_str(), val)
+        }
     }
 }
