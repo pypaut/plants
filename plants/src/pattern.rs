@@ -2,7 +2,7 @@ use core::borrow::BorrowMut;
 use rand::{thread_rng, Rng};
 use std::cmp::Ordering::{Less, Equal, Greater};
 use std::cmp::Ordering;
-use std::iter::Rev;
+use std::iter::{Iterator, Rev};
 use std::str::Chars;
 use crate::symbolstring::{SymbolString};
 use crate::symbol::Symbol;
@@ -162,13 +162,15 @@ mod tests {
 }*/
 
 impl Pattern {
-    pub fn new(pat : Symbol, r : SymbolString, p : f32,
+    pub fn new<'a>(pat : Symbol, r : SymbolString, p : f32,
                left : Option<SymbolString>, right : Option<SymbolString>) -> Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right }
     }
 
-    fn rctx(it : Chars, ctx : &mut Chars, ignore : &str) -> bool {
-        let mut cur = match ctx.next() {
+    fn rctx(it : std::slice::Iter<'_, Symbol>,
+                   ctx : &mut std::slice::Iter<'_, Symbol>,
+                   ignore : &str) -> bool {
+        /*let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
         };
@@ -207,13 +209,15 @@ impl Pattern {
                     return false;
                 }
             }
-        }
+        }*/
 
         false
     }
 
-    fn lctx(it : Rev<Chars>, ctx : &mut Rev<Chars>, ignore : &str) -> bool {
-        let mut cur = match ctx.next() {
+    fn lctx(it : Rev<std::slice::Iter<Symbol>>,
+            ctx : &mut Rev<std::slice::Iter<'_, Symbol>>,
+            ignore : &str) -> bool {
+        /*let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
         };
@@ -248,31 +252,31 @@ impl Pattern {
             else {
                 continue;
             }
-        }
+        }*/
 
         false
     }
 
-    pub fn test(&self, i : usize, s : String, ignored : &str) -> bool {
+    pub fn test(&self, i : usize, s : &SymbolString, ignored : &str) -> bool {
 
-        /*let mut rng = thread_rng();
+        let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
-            let mut valid = s.chars().nth(i).unwrap() == self.pattern.symbols[0].sym;
+            let mut valid = s.symbols[i] == self.pattern;
             //partition string in left and right part
-            let left_str : String = s.chars().take(i).collect();
-            let right_str : String = s.chars().skip(i + 1).collect();
+            let left_str : SymbolString = s.iter().take(i).collect();
+            let right_str : SymbolString = s.iter().skip(i + 1).collect();
             //if we have a left context, check the left context
             valid &= match &self.left {
-                Some(ctx) => Pattern::lctx(left_str.chars().rev(),
-                                                     ctx.chars().rev().borrow_mut(),
+                Some(ctx) => Pattern::lctx(left_str.iter().rev(),
+                                                     ctx.symbols.iter().rev().borrow_mut(),
                                            ignored),
                 None => true
             };
             //if we have a right context, check the right context
             valid &= match &self.right {
-                Some(ctx) => Pattern::rctx(right_str.chars(),
-                                                     ctx.chars().borrow_mut(),
+                Some(ctx) => Pattern::rctx(right_str.iter(),
+                                                     ctx.symbols.iter().borrow_mut(),
                                            ignored),
                 None => true
             };
@@ -281,25 +285,24 @@ impl Pattern {
         }
         else {
             false
-        }*/
-        false
+        }
     }
 
     // Sort list from contexted to context free.
     pub fn cmp_pat(&self, pat : &Pattern) -> Ordering {
-        /*if self.left == None && self.right == None {  // 2 None
-            if pat.left != None || pat.right != None {  // 0-1 None
+        if self.left.is_none() && self.right.is_none() {  // 2 None
+            if !pat.left.is_none() || !pat.right.is_none() {  // 0-1 None
                 Greater
             }
             else {  // pat.left == None && pat.right == None  // 2 None
                 Equal
             }
         }
-        else if self.left == None || self.right == None {  // 1 None
-            if pat.left == None && pat.right == None {  // 2 None
+        else if self.left.is_none() || self.right.is_none() {  // 1 None
+            if pat.left.is_none() && pat.right.is_none() {  // 2 None
                 Less
             }
-            else if pat.left == None || pat.right == None {  // 1 None
+            else if pat.left.is_none() || pat.right.is_none() {  // 1 None
                 Equal
             }
             else {  // pat.left != None && pat.right != None  // 0 None
@@ -307,13 +310,12 @@ impl Pattern {
             }
         }
         else {  // self.left != None && self.right != None  // 0 None
-            if pat.left != None && pat.right != None {  // 0 None
+            if pat.left.is_some() && pat.right.is_some() {  // 0 None
                 Equal
             }
             else {  // 1-2 None
                 Less
             }
-        }*/
-        Equal
+        }
     }
 }

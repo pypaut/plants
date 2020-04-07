@@ -1,17 +1,43 @@
 use std::borrow::Borrow;
 
-pub trait Arith {
-    fn eval(&self) -> f32;
-    fn vars(&self) -> Vec<&str>;
-    fn set(&mut self, var: &str, val: f32) -> Result<(), ()>;
+#[derive(Clone)]
+pub enum Arith {
+    Var(Var),
+    Op(ArithOp)
 }
 
+
+impl Arith {
+    pub fn eval(&self) -> f32 {
+        match self {
+            Arith::Var(v) => v.eval(),
+            Arith::Op(v) => v.eval()
+        }
+    }
+
+    pub fn vars(&self) -> Vec<&str> {
+        match self {
+            Arith::Var(v) => v.vars(),
+            Arith::Op(v) => v.vars()
+        }
+    }
+
+    pub fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
+        match self {
+            Arith::Var(v) => v.set(var, val),
+            Arith::Op(v) => v.set(var, val)
+        }
+    }
+}
+
+
+#[derive(Clone)]
 pub struct Var {
     name: Option<String>,
     value: f32
 }
 
-impl Arith for Var {
+impl Var {
     fn eval(&self) -> f32 {
         self.value
     }
@@ -32,21 +58,20 @@ impl Arith for Var {
             _ => { Err(()) }
         }
     }
-}
 
-impl Var {
-    pub fn new_name(name: String) -> Box<Var> {
-        Box::new(Var{name: Some(name), value: 0.0})
+    pub fn new_name(name: String) -> Box<Arith> {
+        Box::new(Arith::Var(Var{name: Some(name), value: 0.0}))
     }
 
-    pub fn new_value(value: f32) -> Box<Var> {
-        Box::new(Var{name: None, value})
+    pub fn new_value(value: f32) -> Box<Arith> {
+        Box::new(Arith::Var(Var{name: None, value}))
     }
 }
 
+#[derive(Clone)]
 pub struct ArithOp {
-    left: Box<dyn Arith>,
-    right: Box<dyn Arith>,
+    left: Box<Arith>,
+    right: Box<Arith>,
     operator: fn(f32, f32) -> f32
 }
 
@@ -69,7 +94,7 @@ impl OpType {
     }
 }
 
-impl Arith for ArithOp {
+impl ArithOp {
     fn eval(&self) -> f32 {
         (self.operator)(self.left.eval(), self.right.eval())
     }
@@ -94,9 +119,7 @@ impl Arith for ArithOp {
             _ => Ok(())
         }
     }
-}
 
-impl ArithOp {
     fn add(x: f32, y: f32) -> f32 {
         x + y
     }
@@ -113,19 +136,19 @@ impl ArithOp {
         x / y
     }
 
-    pub fn new(op: &OpType, left: Box<dyn Arith>, right: Box<dyn Arith>) -> Box<ArithOp> {
+    pub fn new(op: &OpType, left: Box<Arith>, right: Box<Arith>) -> Box<Arith> {
         let fun = match op {
             OpType::Add => ArithOp::add,
             OpType::Sub => ArithOp::sub,
             OpType::Mul => ArithOp::mul,
             OpType::Div => ArithOp::div
         };
-        Box::new(ArithOp{left, right, operator: fun})
+        Box::new(Arith::Op(ArithOp{left, right, operator: fun}))
     }
 }
 
 pub trait ArithFactory {
     type Exp;
 
-    fn create_from(exp: &Self::Exp) -> Result<Box<dyn Arith>, &'static str>;
+    fn create_from(exp: &Self::Exp) -> Result<Box<Arith>, &'static str>;
 }

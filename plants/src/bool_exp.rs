@@ -122,8 +122,8 @@ impl CompType {
 }
 
 pub struct CompOp {
-    left: Box<dyn arith::Arith>,
-    right: Box<dyn arith::Arith>,
+    left: Box<arith::Arith>,
+    right: Box<arith::Arith>,
     operator: fn(f32, f32) -> bool
 }
 
@@ -177,7 +177,7 @@ impl CompOp {
         x != y
     }
 
-    pub fn new(op: &CompType, left: Box<dyn arith::Arith>, right: Box<dyn arith::Arith>) -> Box<CompOp> {
+    pub fn new(op: &CompType, left: Box<arith::Arith>, right: Box<arith::Arith>) -> Box<CompOp> {
         let fun = match op {
             CompType::Less => CompOp::less,
             CompType::Greater => CompOp::greater,

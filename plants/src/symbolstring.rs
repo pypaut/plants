@@ -5,6 +5,7 @@ use crate::ast::AstNode;
 use crate::lexer::TokenType;
 use crate::parse_rules;
 use crate::lexer::lexer;
+use std::iter::FromIterator;
 
 pub struct SymbolString {
     pub symbols : Vec<Symbol>
@@ -23,10 +24,10 @@ impl SymbolString {
                        Ok(a) => a,
                        Err(e) => {
                            println!("Symbol [{:?}] creation failed: {}", x.node_type, e);
-                       Symbol{
-                           sym: 'a',
-                           var_names: Vec::new(),
-                           params: Vec::new()
+                            Symbol{
+                                sym: 'a',
+                                var_names: Vec::new(),
+                                params: Vec::new()
                        }}
                    }
                 }).collect();
@@ -76,6 +77,32 @@ impl SymbolString {
     }
 
     pub fn push(&mut self, sym: Symbol) {
-        self.symbols.push(sym)
+        self.symbols.push(sym);
+    }
+
+    pub fn push_str(&mut self, s: &SymbolString) {
+        for i in &s.symbols {
+            self.push(i.clone());
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.symbols.len()
+    }
+
+    pub fn iter(&self) -> std::slice::Iter<'_, Symbol> {
+        self.symbols.iter()
+    }
+}
+
+impl<'a> FromIterator<&'a Symbol> for SymbolString {
+    fn from_iter<T: IntoIterator<Item=&'a Symbol>>(iter: T) -> Self {
+        let mut s = SymbolString{symbols: Vec::new()};
+
+        for i in iter {
+            s.symbols.push(i.clone());
+        }
+
+        s
     }
 }

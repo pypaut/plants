@@ -5,7 +5,7 @@ use crate::ast::AstNode;
 impl ArithFactory for Arith {
     type Exp = AstNode;
 
-    fn create_from(exp: &Self::Exp) -> Result<Box<dyn Arith>, &'static str> {
+    fn create_from(exp: &Self::Exp) -> Result<Box<Arith>, &'static str> {
         match exp.node_type {
             TokenType::Aexp | TokenType::AexpMul => {
                 if exp.children.len() == 0 {

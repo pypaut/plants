@@ -1,5 +1,6 @@
 use std::env;
 use std::fs;
+use crate::symbolstring::SymbolString;
 
 mod pattern;
 mod iterate;
@@ -26,11 +27,13 @@ fn main() {
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);
-    let mut res = axiom;
+    let mut res = SymbolString::from_string(&axiom).expect("Invalid axiom");
 
     for _i in 0..iterations {
-        res = iterate::iterate(&res, &rules, &ignored);
+        res = iterate::iterate(&res,
+                               &rules, &ignored);
     }
 
-    fs::write("result.txt", res).expect("Unable to write to 'result.txt' file");
+    fs::write("result.txt", res.to_string())
+        .expect("Unable to write to 'result.txt' file");
 }

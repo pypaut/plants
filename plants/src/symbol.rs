@@ -5,20 +5,21 @@ use crate::ast::AstNode;
 use crate::lexer::{lexer, TokenType};
 use crate::symbolstring::SymbolString;
 
+#[derive(Clone)]
 pub struct Symbol {
     pub sym: char,
     pub var_names : Vec<String>,
-    pub params: Vec<Box<dyn arith::Arith>>
+    pub params: Vec<Box<Arith>>
 }
 
 impl Symbol {
-    pub fn new(sym: char, params: Vec<Box<dyn arith::Arith>>) -> Symbol {
+    pub fn new(sym: char, params: Vec<Box<Arith>>) -> Symbol {
         Symbol{sym, params, var_names: Vec::new()}
     }
 
     pub fn new_with_values(sym: char, params: Vec<f32>) -> Symbol {
         let params = params.iter()
-            .map(|x| {arith::Var::new_value(*x) as Box<dyn Arith>}).collect();
+            .map(|x| {arith::Var::new_value(*x)}).collect();
 
         Symbol::new(sym, params)
     }
@@ -31,7 +32,7 @@ impl Symbol {
                 Err("No data for ast conversion to Symbol")
             } else {
                 let sym = &exp.children[0].data;
-                let params: Vec<Box<dyn Arith>> = exp.children[1..].iter()
+                let params: Vec<Box<Arith>> = exp.children[1..].iter()
                     .filter_map(|x| {
                         if x.children.is_empty() {
                             None
