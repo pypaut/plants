@@ -3,6 +3,8 @@ use crate::arith::Arith;
 use crate::symbol::Symbol;
 use crate::ast::AstNode;
 use crate::lexer::TokenType;
+use crate::parse_rules;
+use crate::lexer::lexer;
 
 pub struct SymbolString {
     pub symbols : Vec<Symbol>
@@ -12,15 +14,34 @@ pub struct SymbolString {
 impl SymbolString {
     pub fn from_ast(exp: &Box<AstNode>) -> Result<SymbolString, &'static str> {
         if exp.node_type != TokenType::Lctx && exp.node_type != TokenType::Rctx
-            && exp.node_type != TokenType::Replacement {
+            && exp.node_type != TokenType::Replacement && exp.node_type != TokenType::Pred {
             Err("SymbolString creation failed: invalid node type.")
         } else {
             let symbols = exp.children.iter()
                 .map(|x| {
-                   Symbol::from_ast(x).unwrap()
+                   match Symbol::from_ast(x) {
+                       Ok(a) => a,
+                       Err(e) => {
+                           println!("Symbol [{:?}] creation failed: {}", x.node_type, e);
+                       Symbol{
+                           sym: 'a',
+                           var_names: Vec::new(),
+                           params: Vec::new()
+                       }}
+                   }
                 }).collect();
             Ok(SymbolString{symbols})
         }
+    }
+
+    pub fn from_string(exp: &str) -> Result<SymbolString, &'static str> {
+        let tokens = lexer(exp);
+        let ast = match parse_rules::pat(&tokens, 0) {
+            (Some(a), _) => a,
+            _ => {return Err("Could not parse expression to SymbolString");}
+        };
+
+        SymbolString::from_ast(&ast)
     }
 
     pub fn vars(&mut self) -> Vec<&str> {
@@ -52,5 +73,9 @@ impl SymbolString {
         }
 
         Ok(())
+    }
+
+    pub fn push(&mut self, sym: Symbol) {
+        self.symbols.push(sym)
     }
 }

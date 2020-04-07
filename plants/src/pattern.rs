@@ -5,9 +5,10 @@ use std::cmp::Ordering;
 use std::iter::Rev;
 use std::str::Chars;
 use crate::symbolstring::{SymbolString};
+use crate::symbol::Symbol;
 
 pub struct Pattern {
-    pub pattern : SymbolString,       // Initial character
+    pub pattern : Symbol,       // Initial character
     pub replacement : SymbolString, // Replacement string
     pub p : f32,               // Replacement probability
     pub left : Option<SymbolString>,          // Left context
@@ -161,7 +162,7 @@ mod tests {
 }*/
 
 impl Pattern {
-    pub fn new(pat : SymbolString, r : SymbolString, p : f32,
+    pub fn new(pat : Symbol, r : SymbolString, p : f32,
                left : Option<SymbolString>, right : Option<SymbolString>) -> Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right }
     }

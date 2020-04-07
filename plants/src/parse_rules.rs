@@ -188,7 +188,7 @@ fn word(tokens : &VecDeque<lexer::Token>, index : usize) -> AstRet {
 }
 
 //pattern: (p_word|Char)+
-fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
+pub fn pat(tokens: &VecDeque<lexer::Token>, index: usize) -> AstRet {
     let mut i = index;
     let mut result = match p_word(tokens, i) {
         //create the root and add the child
@@ -813,31 +813,51 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     let mut left : Option<SymbolString> = None;
     let mut right : Option<SymbolString> = None;
     let mut p : f32 = 1.0;
-    let mut pattern : SymbolString = SymbolString{ symbols: Vec::new() };
+    let mut pattern : Symbol = Symbol{
+        sym: 'a',
+        var_names: Vec::new(),
+        params: Vec::new()
+    };
     let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
     let mut has_pattern : bool = false;
     let mut has_replacement : bool = false;
 
     for tok in ast.children.iter() {
+        tok.print(0);
         match tok.node_type {
-            TokenType::Rctx => {right = Some(SymbolString::from_ast(tok)?);},
-            TokenType::Lctx => {left = Some(SymbolString::from_ast(tok)?);},
-            TokenType::Prob => {p = tok.data.parse::<f32>().unwrap()},
+            TokenType::Rctx => {
+                //println!("Rctx");
+                right = Some(SymbolString::from_ast(tok)?);
+            },
+            TokenType::Lctx => {
+                //println!("Lctx");
+                left = Some(SymbolString::from_ast(tok)?);
+            },
+            TokenType::Prob => {
+                //println!("Prob");
+                p = tok.data.parse::<f32>().unwrap()
+            },
             TokenType::Pred => {
-                pattern = SymbolString::from_ast(tok)?;
+                //println!("Pred");
+                pattern = Symbol::from_ast(tok)?;
                 has_pattern = true;
             },
             TokenType::Replacement => {
+                //println!("Replacement");
                 replacement = SymbolString::from_ast(tok)?;
                 has_replacement = true;
             },
-            _ => {}
+            _ => {
+                //println!("Unknown: {:?}", tok.node_type);
+            }
         };
     }
 
     if !has_pattern || !has_replacement {
        Err("Rule is missing a pattern or replacement.")
     } else {
+        //println!("{}", pattern.to_string());
+        //println!("{}", replacement.to_string());
         Ok(Pattern::new(pattern, replacement, p, left, right))
     }
 }
@@ -853,12 +873,15 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
         let rule_ast = parse(l);
         let rule_ast = match rule_ast {
             Some(ast) => {
-                ast.print(0);
+                //ast.print(0);
                 //ast
                 match ast.node_type {
-                    TokenType::Rule => {match create_rule(ast) {
-                        Ok(r) => {result.push(r);},
-                        Err(_) => {}
+                    TokenType::Rule => {
+                        match create_rule(ast) {
+                            Ok(r) => {result.push(r);},
+                            Err(e) => {
+                                println!("Error while creating rule: {}", e);
+                            }
                     }},
                     TokenType::Preproc => {},
                     _ => {}
@@ -872,6 +895,5 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
     }
 
     result.sort_by(|a, b| a.cmp_pat(b));
-    //println!("{:?}", result);
     (result, ignored)
 }

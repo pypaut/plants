@@ -12,7 +12,18 @@ pub struct Symbol {
 }
 
 impl Symbol {
-    pub fn from_ast(exp: &Box<AstNode>) -> Result<Symbol, &str> {
+    pub fn new(sym: char, params: Vec<Box<dyn arith::Arith>>) -> Symbol {
+        Symbol{sym, params, var_names: Vec::new()}
+    }
+
+    pub fn new_with_values(sym: char, params: Vec<f32>) -> Symbol {
+        let params = params.iter()
+            .map(|x| {arith::Var::new_value(*x) as Box<dyn Arith>}).collect();
+
+        Symbol::new(sym, params)
+    }
+
+    pub fn from_ast(exp: &Box<AstNode>) -> Result<Symbol, &'static str> {
         if exp.node_type != TokenType::ParamWord && exp.node_type != TokenType::Pred {
             Err("Invalid node type, expected ParamWord|Pred.")
         } else {
@@ -95,3 +106,15 @@ impl Symbol {
         }
     }
 }
+
+impl PartialEq for Symbol {
+    fn eq(&self, other: &Self) -> bool {
+        self.sym == other.sym && self.params.len() == other.params.len()
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+impl Eq for Symbol {}
