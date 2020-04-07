@@ -15,7 +15,8 @@ pub struct SymbolString {
 impl SymbolString {
     pub fn from_ast(exp: &Box<AstNode>) -> Result<SymbolString, &'static str> {
         if exp.node_type != TokenType::Lctx && exp.node_type != TokenType::Rctx
-            && exp.node_type != TokenType::Replacement && exp.node_type != TokenType::Pred {
+            && exp.node_type != TokenType::Replacement && exp.node_type != TokenType::Pred
+        && exp.node_type != TokenType::Pat {
             Err("SymbolString creation failed: invalid node type.")
         } else {
             let symbols = exp.children.iter()
@@ -43,6 +44,10 @@ impl SymbolString {
         };
 
         SymbolString::from_ast(&ast)
+    }
+
+    pub fn empty() -> SymbolString {
+        SymbolString{symbols: Vec::new()}
     }
 
     pub fn vars(&mut self) -> Vec<&str> {

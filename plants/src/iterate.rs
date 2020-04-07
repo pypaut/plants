@@ -5,7 +5,7 @@ use crate::symbolstring::SymbolString;
 // Apply rules once from left to right on the given word.
 pub fn iterate<'a>(s : &SymbolString, patterns : &Vec<pattern::Pattern>,
                ignored : &str) -> SymbolString {
-    let mut result = SymbolString::from_string("").unwrap();
+    let mut result = SymbolString::empty();
 
     for i in 0..s.len() {
         let mut found = false;

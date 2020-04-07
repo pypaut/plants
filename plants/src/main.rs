@@ -15,7 +15,7 @@ mod symbol;
 mod symbolstring;
 
 
-fn main() {
+fn main() -> Result<(), &'static str> {
     let args: Vec<String> = env::args().collect();
     let axiom = args[1].clone();                        // Base word to iterate upon
     let in_file = args[2].clone();                      // File containing rules
@@ -27,7 +27,7 @@ fn main() {
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);
-    let mut res = SymbolString::from_string(&axiom).expect("Invalid axiom");
+    let mut res = SymbolString::from_string(&axiom)?;
 
     for _i in 0..iterations {
         res = iterate::iterate(&res,
@@ -36,4 +36,6 @@ fn main() {
 
     fs::write("result.txt", res.to_string())
         .expect("Unable to write to 'result.txt' file");
+
+    Ok(())
 }
