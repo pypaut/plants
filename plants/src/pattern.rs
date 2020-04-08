@@ -15,23 +15,35 @@ pub struct Pattern {
     pub right : Option<SymbolString>,         // Right context
 }
 
-/*#[cfg(test)]
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::borrow::BorrowMut;
 
     fn test_rctx(s : &str, pat : &str) -> bool {
-        let s = String::from(s);
-        let ctx = String::from(pat);
-        Pattern::rctx(s.chars(), ctx.chars().borrow_mut(),
-                      &Vec::new())
+        let s = match SymbolString::from_string(s) {
+            Ok(s) => s,
+            _ => {return false;}
+        };
+        let ctx = match SymbolString::from_string(pat) {
+            Ok(s) => s,
+            _ => {return false;}
+        };
+        Pattern::rctx(s.iter(), ctx.iter().borrow_mut(),
+                      "")
     }
 
     fn test_lctx(s : &str, pat : &str) -> bool {
-        let s = String::from(s);
-        let ctx = String::from(pat);
-        Pattern::lctx(s.chars().rev(), ctx.chars().rev().borrow_mut(),
-                      &Vec::new())
+        let s = match SymbolString::from_string(s) {
+            Ok(s) => s,
+            _ => {return false;}
+        };
+        let ctx = match SymbolString::from_string(pat) {
+            Ok(s) => s,
+            _ => {return false;}
+        };
+        Pattern::lctx(s.iter().rev(), ctx.iter().rev().borrow_mut(),
+                      "")
     }
 
     #[test]
@@ -159,7 +171,7 @@ mod tests {
 
         assert!(!res);
     }
-}*/
+}
 
 impl Pattern {
     pub fn new<'a>(pat : Symbol, r : SymbolString, p : f32,
@@ -170,19 +182,19 @@ impl Pattern {
     fn rctx(it : std::slice::Iter<'_, Symbol>,
                    ctx : &mut std::slice::Iter<'_, Symbol>,
                    ignore : &str) -> bool {
-        /*let mut cur = match ctx.next() {
+        let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
         };
 
         let mut lvl = 0;
-        let mut pat_lvl = if cur == '[' {1} else {0};
+        let mut pat_lvl = if cur == &'[' {1} else {0};
 
         for c in it {
-            if c == '[' {
+            if c == &'[' {
                 lvl += 1;
             }
-            else if c == ']' {
+            else if c == &']' {
                 lvl -= 1;
             }
             if ignore.contains(&c.to_string())
@@ -194,22 +206,22 @@ impl Pattern {
                     Some(c) => c,
                     None => return true
                 };
-                if cur == '[' {
+                if cur == &'[' {
                     pat_lvl += 1;
                 }
-                else if cur == ']' {
+                else if cur == &']' {
                     pat_lvl -= 1;
                 }
             }
             else {
-                if lvl >= 0 && (c == '[' || c == ']' || lvl != pat_lvl) {
+                if lvl >= 0 && (c == &'[' || c == &']' || lvl != pat_lvl) {
                     continue;
                 }
                 else {
                     return false;
                 }
             }
-        }*/
+        }
 
         false
     }
@@ -217,7 +229,7 @@ impl Pattern {
     fn lctx(it : Rev<std::slice::Iter<Symbol>>,
             ctx : &mut Rev<std::slice::Iter<'_, Symbol>>,
             ignore : &str) -> bool {
-        /*let mut cur = match ctx.next() {
+        let mut cur = match ctx.next() {
             Some(c) => c,
             None => return true
         };
@@ -227,13 +239,13 @@ impl Pattern {
         //it should never go up
 
         for c in it {
-            if c == '[' {
+            if c == &'[' {
                 lvl -= 1;
                 if lvl < min_lvl {
                     min_lvl = lvl;
                 }
             }
-            else if c == ']' {
+            else if c == &']' {
                 lvl += 1;
             }
 
@@ -252,7 +264,7 @@ impl Pattern {
             else {
                 continue;
             }
-        }*/
+        }
 
         false
     }

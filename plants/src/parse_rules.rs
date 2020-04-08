@@ -5,6 +5,7 @@ use crate::symbolstring::SymbolString;
 use std::collections::VecDeque;
 use std::fmt;
 use crate::symbol::Symbol;
+use crate::iter_ctx::IterCtx;
 
 #[derive(Debug)]
 enum LineType {
@@ -823,7 +824,7 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     let mut has_replacement : bool = false;
 
     for tok in ast.children.iter() {
-        tok.print(0);
+        //tok.print(0);
         match tok.node_type {
             TokenType::Rctx => {
                 //println!("Rctx");
@@ -862,10 +863,32 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     }
 }
 
+fn get_param_value(ast: Box<AstNode>, i: usize) -> String {
+    if i >= ast.children.len() {
+        "ERROR".to_string()
+    } else {
+        ast.children[i].data.clone()
+    }
+}
+
+fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
+    if ast.node_type != TokenType::Preproc {
+        return;//invalid node type
+    }
+
+    match ast.data.as_str() {
+        "ignore" => {ctx.ignored = get_param_value(ast, 0);},
+        "axiom" => {ctx.axion = get_param_value(ast, 0);},
+        "niter" => {ctx.n_iter = get_param_value(ast, 0).parse::<usize>()
+            .expect("Invalid parameter formating for niter command.");}
+        _ => {}
+    };
+}
+
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
+pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
     let mut result = Vec::new();
-    let mut ignored : String = String::new();
+    let mut ctx : IterCtx = IterCtx{ignored: String::new(), axion: String::new(), n_iter: 0};
 
     for l in data.lines() {
         //println!("{}", l);
@@ -883,7 +906,7 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
                                 println!("Error while creating rule: {}", e);
                             }
                     }},
-                    TokenType::Preproc => {},
+                    TokenType::Preproc => {read_preproc(ast, &mut ctx);},
                     _ => {}
                 };
             },
@@ -894,6 +917,7 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, String) {
         };
     }
 
+    println!("{:?}", ctx);
     result.sort_by(|a, b| a.cmp_pat(b));
-    (result, ignored)
+    (result, ctx)
 }

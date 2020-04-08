@@ -118,4 +118,14 @@ impl PartialEq for Symbol {
     }
 }
 
+impl PartialEq<char> for Symbol {
+    fn eq(&self, other: &char) -> bool {
+        self.sym == *other && self.params.is_empty()
+    }
+
+    fn ne(&self, other: &char) -> bool {
+        !self.eq(other)
+    }
+}
+
 impl Eq for Symbol {}

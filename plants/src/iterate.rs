@@ -1,16 +1,17 @@
 use crate::pattern;
 use crate::symbolstring::SymbolString;
+use crate::iter_ctx::IterCtx;
 
 
 // Apply rules once from left to right on the given word.
-pub fn iterate<'a>(s : &SymbolString, patterns : &Vec<pattern::Pattern>,
-               ignored : &str) -> SymbolString {
+pub fn iterate(s : &SymbolString, patterns : &Vec<pattern::Pattern>,
+               ctx : &IterCtx) -> SymbolString {
     let mut result = SymbolString::empty();
 
     for i in 0..s.len() {
         let mut found = false;
         for p in patterns.iter() {
-            if p.test(i, s, ignored) {
+            if p.test(i, s, ctx.ignored.as_str()) {
                 result.push_str(&p.replacement);
                 found = true;
                 break;
