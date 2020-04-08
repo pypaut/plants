@@ -7,6 +7,7 @@ use std::str::Chars;
 use crate::symbolstring::{SymbolString};
 use crate::symbol::Symbol;
 use crate::bool_exp::BoolExp;
+use std::collections::HashMap;
 
 pub struct Pattern {
     pub pattern : Symbol,       // Initial character
@@ -31,8 +32,9 @@ mod tests {
             Ok(s) => s,
             _ => {return false;}
         };
-        Pattern::rctx(s.iter(), ctx.iter().borrow_mut(),
-                      "")
+        let (b, _) = Pattern::rctx(s.iter(), ctx.iter().borrow_mut(),
+                      "");
+        b
     }
 
     fn test_lctx(s : &str, pat : &str) -> bool {
@@ -44,8 +46,9 @@ mod tests {
             Ok(s) => s,
             _ => {return false;}
         };
-        Pattern::lctx(s.iter().rev(), ctx.iter().rev().borrow_mut(),
-                      "")
+        let (b, _) = Pattern::lctx(s.iter().rev(), ctx.iter().rev().borrow_mut(),
+                      "");
+        b
     }
 
     #[test]
@@ -184,12 +187,13 @@ impl Pattern {
 
     fn rctx(it : std::slice::Iter<'_, Symbol>,
                    ctx : &mut std::slice::Iter<'_, Symbol>,
-                   ignore : &str) -> bool {
+                   ignore : &str) -> (bool, Vec<f32>) {
         let mut cur = match ctx.next() {
             Some(c) => c,
-            None => return true
+            None => return (true, Vec::new())
         };
 
+        let mut values = Vec::new();
         let mut lvl = 0;
         let mut pat_lvl = if cur == &'[' {1} else {0};
 
@@ -205,9 +209,11 @@ impl Pattern {
                 continue
             }
             else if c == cur && lvl >= 0 && lvl == pat_lvl {
+                let mut params = c.get_vec();
+                values.append(&mut params);
                 cur = match ctx.next() {
                     Some(c) => c,
-                    None => return true
+                    None => return (true, values)
                 };
                 if cur == &'[' {
                     pat_lvl += 1;
@@ -221,22 +227,23 @@ impl Pattern {
                     continue;
                 }
                 else {
-                    return false;
+                    return (false, Vec::new());
                 }
             }
         }
 
-        false
+        (false, Vec::new())
     }
 
     fn lctx(it : Rev<std::slice::Iter<Symbol>>,
             ctx : &mut Rev<std::slice::Iter<'_, Symbol>>,
-            ignore : &str) -> bool {
+            ignore : &str) -> (bool, Vec<f32>) {
         let mut cur = match ctx.next() {
             Some(c) => c,
-            None => return true
+            None => return (true, Vec::new())
         };
 
+        let mut values = Vec::new();
         let mut min_lvl = 0;//minimum level explored
         let mut lvl = 0;//level of current context
         //it should never go up
@@ -256,12 +263,15 @@ impl Pattern {
             //because they are not part of the left context
             else if lvl <= min_lvl  && !ignore.contains(&c.to_string()) {
                 if c == cur {
+                    let mut params = c.get_vec();
+                    params.append(&mut values);
+                    values = params;
                     cur = match ctx.next() {
                         Some(c) => c,
-                        None => return true
+                        None => return (true, values)
                     };
                 } else {
-                    return false;
+                    return (false, Vec::new());
                 }
             }
             else {
@@ -269,32 +279,109 @@ impl Pattern {
             }
         }
 
-        false
+        (false, Vec::new())
     }
 
-    pub fn test(&self, i : usize, s : &SymbolString, ignored : &str) -> bool {
+    pub fn test(&mut self, i : usize, s : &SymbolString, ignored : &str) -> bool {
 
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
             let mut valid = s.symbols[i] == self.pattern;
+            let pat_values = if !valid {
+                return false;
+            } else {
+                s.symbols[i].get_vec()
+            };
             //partition string in left and right part
             let left_str : SymbolString = s.iter().take(i).collect();
             let right_str : SymbolString = s.iter().skip(i + 1).collect();
             //if we have a left context, check the left context
-            valid &= match &self.left {
+            let (valid_tmp, lctx_values) = match &self.left {
                 Some(ctx) => Pattern::lctx(left_str.iter().rev(),
                                                      ctx.symbols.iter().rev().borrow_mut(),
                                            ignored),
-                None => true
+                None => (true, Vec::new())
             };
+            valid &= valid_tmp;
+            if !valid {
+                return false;
+            }
             //if we have a right context, check the right context
-            valid &= match &self.right {
+            let (valid_tmp, rctx_values) = match &self.right {
                 Some(ctx) => Pattern::rctx(right_str.iter(),
                                                      ctx.symbols.iter().borrow_mut(),
                                            ignored),
-                None => true
+                None => (true, Vec::new())
             };
+            valid &= valid_tmp;
+            if !valid {
+                return false;
+            }
+
+            //set values in lctx, rctx, pred
+            let mut lvars = match &mut self.left {
+                Some(ctx) => {
+                    ctx.vars()
+                },
+                None => {
+                    Vec::new()
+                }
+            };
+            let mut rvars = match &mut self.right {
+                Some(ctx) => {
+                    ctx.vars()
+                },
+                None => {
+                    Vec::new()
+                }
+            };
+            self.pattern.compute_var_names();
+
+            let mut pat_vars = &self.pattern.var_names.clone();
+
+            //bind variable names to values in a dictionary
+            let mut bindings = HashMap::new();
+            //println!("{:?}->{:?}", lvars, lctx_values);
+            //println!("{:?}->{:?}", rvars, rctx_values);
+            for (i, var) in lvars.iter().enumerate() {
+                bindings.insert(*var, lctx_values[i].clone());
+            }
+            for (i, var) in rvars.iter().enumerate() {
+                bindings.insert(*var, rctx_values[i].clone());
+            }
+            for (i, var) in pat_vars.iter().enumerate() {
+                bindings.insert(var, pat_values[i].clone());
+            }
+
+            println!("Bindings: {:?}", bindings);
+            //set values in condition
+            if let Some(cond) = &self.cond {
+                let cond_vars = cond.vars();
+                for v in cond_vars {
+                    if !bindings.contains_key(v) {
+                        panic!("Could not read cond variable in binding table.");
+                    } else {
+                        let mut cond_tmp = cond.clone();
+                        cond_tmp.set(v, bindings[v]);
+                        if !cond_tmp.eval() {
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            //set values in replacement
+            //not good for performance but I don't know how to do
+            let mut replace_vars = self.replacement.clone();
+            let replace_vars = replace_vars.vars();
+            for v in replace_vars {
+                if !bindings.contains_key(v) {
+                    panic!("Could not read replacement variable in binding table.");
+                } else {
+                    self.replacement.set(v, bindings[v]);
+                }
+            }
 
             valid
         }

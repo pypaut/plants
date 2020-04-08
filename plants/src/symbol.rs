@@ -60,8 +60,8 @@ impl Symbol {
                 self.var_names.push(var.to_string());
             }
         }
-        self.var_names.sort();
-        self.var_names.dedup();
+        //self.var_names.sort();
+        //self.var_names.dedup();
     }
 
     pub fn to_string(&self) -> String {
@@ -115,6 +115,15 @@ impl Symbol {
         }
     }
 
+    pub fn set_vec(&mut self, vec: &Vec<f32>) {
+        if (vec.len() >= self.params.len()) {
+            return;
+        }
+        for (i, x) in vec.iter().enumerate() {
+            self.set_i(i, *x);
+        }
+    }
+
     pub fn get(&self, var: &str) -> Result<f32, ()> {
         for v in &self.params {
             let vars = v.vars();
@@ -132,6 +141,10 @@ impl Symbol {
         } else {
             Ok(self.params[i].eval())
         }
+    }
+
+    pub fn get_vec(&self) -> Vec<f32> {
+        self.params.iter().map(|x| x.eval()).collect()
     }
 
     pub fn n_param(&self) -> usize {

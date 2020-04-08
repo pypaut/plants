@@ -7,6 +7,7 @@ use crate::parse_rules;
 use crate::lexer::lexer;
 use std::iter::FromIterator;
 
+#[derive(Clone)]
 pub struct SymbolString {
     pub symbols : Vec<Symbol>
 }
@@ -83,14 +84,14 @@ impl SymbolString {
 
     pub fn n_params(&self) -> usize {
         let mut res = 0;
-        for s in self.symbols {
+        for s in &self.symbols {
             res += s.n_param();
         }
 
         res
     }
 
-    pub fn set_vec(&mut self, vec: Vec<f32>) {
+    pub fn set_vec(&mut self, vec: &Vec<f32>) {
         let mut i = 0;
         for sym in self.symbols.iter_mut() {
             for j in 0..sym.n_param() {
@@ -98,6 +99,17 @@ impl SymbolString {
             }
             i += sym.n_param();
         }
+    }
+
+    pub fn get_vec(&self) -> Vec<f32> {
+        let mut res = Vec::new();
+        for sym in self.symbols.iter() {
+            for j in 0..sym.n_param() {
+                res.push(sym.get_i(j).expect("Error while getting parameter vec."));
+            }
+        }
+
+        res
     }
 
     pub fn push(&mut self, sym: Symbol) {

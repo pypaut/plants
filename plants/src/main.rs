@@ -25,7 +25,7 @@ fn main() -> Result<(), &'static str> {
 
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
-    let (rules, ctx) = parse_rules::parse_rules(&rule_str);
+    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str);
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);
@@ -33,7 +33,7 @@ fn main() -> Result<(), &'static str> {
 
     for _i in 0..ctx.n_iter {
         res = iterate::iterate(&res,
-                               &rules, &ctx);
+                               &mut rules, &ctx);
     }
 
     fs::write(out_file, res.to_string())
