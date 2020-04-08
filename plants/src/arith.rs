@@ -59,6 +59,10 @@ impl Var {
         }
     }
 
+    fn get(&self) -> f32 {
+        self.value
+    }
+
     pub fn new_name(name: String) -> Box<Arith> {
         Box::new(Arith::Var(Var{name: Some(name), value: 0.0}))
     }

@@ -81,6 +81,25 @@ impl SymbolString {
         Ok(())
     }
 
+    pub fn n_params(&self) -> usize {
+        let mut res = 0;
+        for s in self.symbols {
+            res += s.n_param();
+        }
+
+        res
+    }
+
+    pub fn set_vec(&mut self, vec: Vec<f32>) {
+        let mut i = 0;
+        for sym in self.symbols.iter_mut() {
+            for j in 0..sym.n_param() {
+                sym.set_i(j, vec[i + j]);
+            }
+            i += sym.n_param();
+        }
+    }
+
     pub fn push(&mut self, sym: Symbol) {
         self.symbols.push(sym);
     }

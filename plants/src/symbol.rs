@@ -82,11 +82,19 @@ impl Symbol {
     }
 
     pub fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
+        let mut fail = true;
         for mut p in &mut self.params {
-            p.set(var, val)?
+            match p.set(var, val) {
+                Ok(()) => {fail = false;},
+                _ => {}
+            }
         }
 
-        Ok(())
+        if fail {
+            Err(())
+        } else {
+            Ok(())
+        }
     }
 
     //set variable at index i
@@ -105,6 +113,29 @@ impl Symbol {
             });
             self.params[i].set(var.as_str(), val)
         }
+    }
+
+    pub fn get(&self, var: &str) -> Result<f32, ()> {
+        for v in &self.params {
+            let vars = v.vars();
+            if vars.len() == 1 && vars[0] == var {
+                return Ok(v.eval());
+            }
+        }
+
+        Err(())
+    }
+
+    pub fn get_i(&self, i: usize) -> Result<f32, ()> {
+        if i >= self.params.len() {
+            Err(())
+        } else {
+            Ok(self.params[i].eval())
+        }
+    }
+
+    pub fn n_param(&self) -> usize {
+        self.params.len()
     }
 }
 
