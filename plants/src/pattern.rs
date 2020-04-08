@@ -6,6 +6,7 @@ use std::iter::{Iterator, Rev};
 use std::str::Chars;
 use crate::symbolstring::{SymbolString};
 use crate::symbol::Symbol;
+use crate::bool_exp::BoolExp;
 
 pub struct Pattern {
     pub pattern : Symbol,       // Initial character
@@ -13,6 +14,7 @@ pub struct Pattern {
     pub p : f32,               // Replacement probability
     pub left : Option<SymbolString>,          // Left context
     pub right : Option<SymbolString>,         // Right context
+    pub cond : Option<Box<BoolExp>> //condition
 }
 
 #[cfg(test)]
@@ -175,8 +177,9 @@ mod tests {
 
 impl Pattern {
     pub fn new<'a>(pat : Symbol, r : SymbolString, p : f32,
-               left : Option<SymbolString>, right : Option<SymbolString>) -> Pattern {
-        Pattern{pattern: pat, replacement: r, p, left, right }
+               left : Option<SymbolString>, right : Option<SymbolString>,
+                cond : Option<Box<BoolExp>>) -> Pattern {
+        Pattern{pattern: pat, replacement: r, p, left, right, cond}
     }
 
     fn rctx(it : std::slice::Iter<'_, Symbol>,

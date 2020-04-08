@@ -6,7 +6,7 @@ use crate::ast::AstNode;
 impl BoolExpFactory for BoolExp {
     type Exp = AstNode;
 
-    fn create_from(exp: &Self::Exp) -> Result<Box<dyn BoolExp>, &'static str> {
+    fn create_from(exp: &Self::Exp) -> Result<Box<BoolExp>, &'static str> {
         match exp.node_type {
             TokenType::Cond | TokenType::CondAnd => {
                 if exp.children.len() == 0 {
@@ -47,8 +47,8 @@ impl BoolExpFactory for BoolExp {
             TokenType::CondBool => {
                 if exp.data.len() > 0 {
                     match exp.data.as_str() {
-                        "true" => Ok(Box::new(bool_exp::Bool{value: true})),
-                        "false" => Ok(Box::new(bool_exp::Bool{value: false})),
+                        "true" => Ok(bool_exp::Bool::new(true)),
+                        "false" => Ok(bool_exp::Bool::new(false)),
                         _ => Err("Could not convert CondBool: invalid value.")
                     }
                 } else {

@@ -1,9 +1,46 @@
 use crate::arith;
 
-pub trait BoolExp {
+/*pub trait BoolExp {
     fn eval(&self) -> bool;
     fn vars(&self) -> Vec<&str>;
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()>;
+}*/
+
+#[derive(Clone)]
+pub enum BoolExp {
+    BinOp(BinOp),
+    Unop(UnOp),
+    CompOp(CompOp),
+    Bool(Bool)
+}
+
+impl BoolExp {
+    pub fn eval(&self) -> bool {
+        match self {
+            BoolExp::BinOp(v) => v.eval(),
+            BoolExp::Unop(v) => v.eval(),
+            BoolExp::CompOp(v) => v.eval(),
+            BoolExp::Bool(v) => v.eval(),
+        }
+    }
+
+    pub fn vars(&self) -> Vec<&str> {
+        match self {
+            BoolExp::BinOp(v) => v.vars(),
+            BoolExp::Unop(v) => v.vars(),
+            BoolExp::CompOp(v) => v.vars(),
+            BoolExp::Bool(v) => v.vars(),
+        }
+    }
+
+    pub fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
+        match self {
+            BoolExp::BinOp(v) => v.set(var, val),
+            BoolExp::Unop(v) => v.set(var, val),
+            BoolExp::CompOp(v) => v.set(var, val),
+            BoolExp::Bool(v) => v.set(var, val),
+        }
+    }
 }
 
 pub enum BinOpType {
@@ -11,13 +48,14 @@ pub enum BinOpType {
     Or
 }
 
+#[derive(Clone)]
 pub struct BinOp {
-    left: Box<dyn BoolExp>,
-    right: Box<dyn BoolExp>,
+    left: Box<BoolExp>,
+    right: Box<BoolExp>,
     operator: fn(bool, bool) -> bool
 }
 
-impl BoolExp for BinOp {
+impl BinOp {
     fn eval(&self) -> bool {
         (self.operator)(self.left.eval(), self.right.eval())
     }
@@ -40,9 +78,7 @@ impl BoolExp for BinOp {
             _ => Ok(())
         }
     }
-}
 
-impl BinOp {
     fn and(x: bool, y: bool) -> bool {
         x && y
     }
@@ -51,13 +87,13 @@ impl BinOp {
         x || y
     }
 
-    pub fn new(op: &BinOpType, left: Box<dyn BoolExp>, right: Box<dyn BoolExp>) -> Box<BinOp> {
+    pub fn new(op: &BinOpType, left: Box<BoolExp>, right: Box<BoolExp>) -> Box<BoolExp> {
         let fun = match op {
             BinOpType::And => BinOp::and,
             BinOpType::Or => BinOp::or
         };
 
-        Box::new(BinOp{left, right, operator: fun})
+        Box::new(BoolExp::BinOp(BinOp{left, right, operator: fun}))
     }
 }
 
@@ -65,12 +101,13 @@ pub enum UnOpType {
     Not
 }
 
+#[derive(Clone)]
 pub struct UnOp {
-    exp: Box<dyn BoolExp>,
+    exp: Box<BoolExp>,
     operator: fn(bool) -> bool
 }
 
-impl BoolExp for UnOp {
+impl UnOp {
     fn eval(&self) -> bool {
         (self.operator)(self.exp.eval())
     }
@@ -82,19 +119,17 @@ impl BoolExp for UnOp {
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
         self.exp.set(var, val)
     }
-}
 
-impl UnOp {
     fn not(x: bool) -> bool {
         !x
     }
 
-    pub fn new(op: &UnOpType, exp: Box<dyn BoolExp>) -> Box<UnOp> {
+    pub fn new(op: &UnOpType, exp: Box<BoolExp>) -> Box<BoolExp> {
         let fun = match op {
             UnOpType::Not => UnOp::not
         };
 
-        Box::new(UnOp{exp, operator: fun})
+        Box::new(BoolExp::Unop(UnOp{exp, operator: fun}))
     }
 }
 
@@ -121,13 +156,14 @@ impl CompType {
     }
 }
 
+#[derive(Clone)]
 pub struct CompOp {
     left: Box<arith::Arith>,
     right: Box<arith::Arith>,
     operator: fn(f32, f32) -> bool
 }
 
-impl BoolExp for CompOp {
+impl CompOp {
     fn eval(&self) -> bool {
         (self.operator)(self.left.eval(), self.right.eval())
     }
@@ -150,9 +186,7 @@ impl BoolExp for CompOp {
             _ => Ok(())
         }
     }
-}
 
-impl CompOp {
     fn less(x: f32, y: f32) -> bool {
         x < y
     }
@@ -177,7 +211,7 @@ impl CompOp {
         x != y
     }
 
-    pub fn new(op: &CompType, left: Box<arith::Arith>, right: Box<arith::Arith>) -> Box<CompOp> {
+    pub fn new(op: &CompType, left: Box<arith::Arith>, right: Box<arith::Arith>) -> Box<BoolExp> {
         let fun = match op {
             CompType::Less => CompOp::less,
             CompType::Greater => CompOp::greater,
@@ -187,15 +221,20 @@ impl CompOp {
             CompType::NotEqual => CompOp::not_equal
         };
 
-        Box::new(CompOp{left, right, operator: fun})
+        Box::new(BoolExp::CompOp(CompOp{left, right, operator: fun}))
     }
 }
 
+#[derive(Clone)]
 pub struct Bool {
     pub value: bool
 }
 
-impl BoolExp for Bool {
+impl Bool {
+    pub fn new(val: bool) -> Box<BoolExp> {
+        Box::new(BoolExp::Bool(Bool{value: val}))
+    }
+
     fn eval(&self) -> bool {
         self.value
     }
@@ -212,5 +251,5 @@ impl BoolExp for Bool {
 pub trait BoolExpFactory {
     type Exp;
 
-    fn create_from(exp: &Self::Exp) -> Result<Box<dyn BoolExp>, &'static str>;
+    fn create_from(exp: &Self::Exp) -> Result<Box<BoolExp>, &'static str>;
 }

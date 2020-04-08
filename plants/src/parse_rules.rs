@@ -6,6 +6,9 @@ use std::collections::VecDeque;
 use std::fmt;
 use crate::symbol::Symbol;
 use crate::iter_ctx::IterCtx;
+use crate::bool_exp::{BoolExp, BoolExpFactory};
+use crate::bool_exp::BoolExp::Bool;
+use crate::{ast_to_boolexp, bool_exp};
 
 #[derive(Debug)]
 enum LineType {
@@ -822,6 +825,7 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
     let mut has_pattern : bool = false;
     let mut has_replacement : bool = false;
+    let mut cond : Option<Box<BoolExp>> = None;
 
     for tok in ast.children.iter() {
         //tok.print(0);
@@ -848,6 +852,10 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
                 replacement = SymbolString::from_ast(tok)?;
                 has_replacement = true;
             },
+            TokenType::Cond => {
+                cond = Some(BoolExp::create_from(tok)
+                                .unwrap_or(bool_exp::Bool::new(false)));
+            },
             _ => {
                 //println!("Unknown: {:?}", tok.node_type);
             }
@@ -859,7 +867,7 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     } else {
         //println!("{}", pattern.to_string());
         //println!("{}", replacement.to_string());
-        Ok(Pattern::new(pattern, replacement, p, left, right))
+        Ok(Pattern::new(pattern, replacement, p, left, right, cond))
     }
 }
 

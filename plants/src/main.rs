@@ -37,7 +37,7 @@ fn main() -> Result<(), &'static str> {
     }
 
     fs::write(out_file, res.to_string())
-        .expect("Unable to write to 'result.txt' file");
+        .expect("Unable to write to output file");
 
     Ok(())
 }
