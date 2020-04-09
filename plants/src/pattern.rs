@@ -379,7 +379,10 @@ impl Pattern {
                 if !bindings.contains_key(v) {
                     panic!("Could not read replacement variable in binding table.");
                 } else {
-                    self.replacement.set(v, bindings[v]);
+                    match self.replacement.set(v, bindings[v]) {
+                        Err(()) => {eprintln!("Could not set variable for replacement.");},
+                        _ => {}
+                    };
                 }
             }
 

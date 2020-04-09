@@ -75,11 +75,18 @@ impl SymbolString {
     }
 
     pub fn set(&mut self, var: &str, val: f32) -> Result<(), ()> {
+        let mut fail = true;
         for mut sym in &mut self.symbols {
-            sym.set(var, val)?;
+            if let Ok(()) = sym.set(var, val) {
+                fail = false;
+            }
         }
 
-        Ok(())
+        if fail {
+            Err(())
+        } else {
+            Ok(())
+        }
     }
 
     pub fn n_params(&self) -> usize {
