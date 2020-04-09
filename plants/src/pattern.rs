@@ -353,7 +353,7 @@ impl Pattern {
                 bindings.insert(var, pat_values[i].clone());
             }
 
-            println!("Bindings: {:?}", bindings);
+            //println!("Bindings: {:?}", bindings);
             //set values in condition
             if let Some(cond) = &self.cond {
                 let cond_vars = cond.vars();
