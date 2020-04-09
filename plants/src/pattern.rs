@@ -283,7 +283,6 @@ impl Pattern {
     }
 
     pub fn test(&mut self, i : usize, s : &SymbolString, ignored : &str) -> bool {
-
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
