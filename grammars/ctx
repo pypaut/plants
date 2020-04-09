@@ -1,0 +1,14 @@
+#ignore +-F
+#niter 30
+#axiom FiFiFi
+
+o<o>o->i
+o<o>i->i[-FiFi]
+o<i>o->i
+o<i>i->i
+i<o>o->o
+i<o>i->iFi
+i<i>o->i
+i<i>i->o
++->-
+-->+

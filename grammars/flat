@@ -1,0 +1,4 @@
+#niter 5
+#axiom X
+X->F[+X][-X]FX
+F->FF
