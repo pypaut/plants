@@ -41,9 +41,12 @@ impl Segment {
     pub fn collinear(&self, s : Segment, epsilon : f64) -> bool {
         let self_dir : Vector3 = self.build_dir();
         let s_dir : Vector3 = s.build_dir();
+        let dir3 = s.b.pos() - self.a.pos();
+        let dot_align = dir3.dot(self_dir);
 
         let prod = self_dir.dot(s_dir);
         prod >= 1.0 - epsilon && prod <= 1.0 + epsilon
+        && dot_align >= 1.0 - epsilon && dot_align <= 1.0 + epsilon
     }
 
     pub fn size_eq(&self, s : &Segment, epsilon : f64) -> bool {
