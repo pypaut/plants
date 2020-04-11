@@ -204,7 +204,7 @@ impl Pattern {
             else if c == &']' {
                 lvl -= 1;
             }
-            if ignore.contains(&c.to_string())
+            if ignore.contains(&c.sym.to_string())
             {
                 continue
             }
@@ -261,7 +261,7 @@ impl Pattern {
 
             //ignore branches that came before the current char
             //because they are not part of the left context
-            else if lvl <= min_lvl  && !ignore.contains(&c.to_string()) {
+            else if lvl <= min_lvl  && !ignore.contains(&c.sym.to_string()) {
                 if c == cur {
                     let mut params = c.get_vec();
                     params.append(&mut values);
@@ -357,16 +357,19 @@ impl Pattern {
             //set values in condition
             if let Some(cond) = &self.cond {
                 let cond_vars = cond.vars();
+                let mut cond_tmp = cond.clone();
                 for v in cond_vars {
                     if !bindings.contains_key(v) {
                         panic!("Could not read cond variable in binding table.");
                     } else {
-                        let mut cond_tmp = cond.clone();
                         cond_tmp.set(v, bindings[v]);
-                        if !cond_tmp.eval() {
-                            return false;
-                        }
                     }
+                }
+                if !cond_tmp.eval() {
+                    return false;
+                } else {
+                    valid = true;
+                    //println!("Valid cond,");
                 }
             }
 

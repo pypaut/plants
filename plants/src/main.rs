@@ -39,6 +39,7 @@ fn main() -> Result<(), &'static str> {
     for i in 0..ctx.n_iter {
         res = iterate::iterate(&res,
                                &mut rules, &ctx);
+        //println!("-----------------------------");
         if save_iter {
             let out_tmp = format!("{}{}", out_file, i.to_string());
             println!("Saving {}", out_tmp);
