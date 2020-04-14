@@ -185,9 +185,10 @@ impl Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right, cond}
     }
 
-    fn rctx(it : std::slice::Iter<'_, Symbol>,
+    fn rctx<'a, I>(it : I,
                    ctx : &mut std::slice::Iter<'_, Symbol>,
-                   ignore : &str) -> (bool, Vec<f32>) {
+                   ignore : &str) -> (bool, Vec<f32>)
+    where I: IntoIterator<Item = &'a Symbol> {
         let mut cur = match ctx.next() {
             Some(c) => c,
             None => return (true, Vec::new())
@@ -235,9 +236,10 @@ impl Pattern {
         (false, Vec::new())
     }
 
-    fn lctx(it : Rev<std::slice::Iter<Symbol>>,
+    fn lctx<'a, I>(it : I,
             ctx : &mut Rev<std::slice::Iter<'_, Symbol>>,
-            ignore : &str) -> (bool, Vec<f32>) {
+            ignore : &str) -> (bool, Vec<f32>)
+    where I: IntoIterator<Item = &'a Symbol>{
         let mut cur = match ctx.next() {
             Some(c) => c,
             None => return (true, Vec::new())
@@ -293,11 +295,11 @@ impl Pattern {
                 s.symbols[i].get_vec()
             };
             //partition string in left and right part
-            let left_str : SymbolString = s.iter().take(i).collect();
-            let right_str : SymbolString = s.iter().skip(i + 1).collect();
+            let left_str = s.iter().take(i);
+            let right_str = s.iter().skip(i + 1);
             //if we have a left context, check the left context
             let (valid_tmp, lctx_values) = match &self.left {
-                Some(ctx) => Pattern::lctx(left_str.iter().rev(),
+                Some(ctx) => Pattern::lctx(left_str.rev(),
                                                      ctx.symbols.iter().rev().borrow_mut(),
                                            ignored),
                 None => (true, Vec::new())
@@ -308,7 +310,7 @@ impl Pattern {
             }
             //if we have a right context, check the right context
             let (valid_tmp, rctx_values) = match &self.right {
-                Some(ctx) => Pattern::rctx(right_str.iter(),
+                Some(ctx) => Pattern::rctx(right_str,
                                                      ctx.symbols.iter().borrow_mut(),
                                            ignored),
                 None => (true, Vec::new())
