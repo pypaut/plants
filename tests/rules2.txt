@@ -1,2 +1,5 @@
-F:F+F-LF[FLF][FLF]
-L:[{-f+f+f-|-f+f+f+f}]
+#axiom F+F+F+F
+#niter 2
+
+F->F+f-FF+F+FF+Ff+FF-f+FF-F-FF-Ff-FFF
+f->ffffff
