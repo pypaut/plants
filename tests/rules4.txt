@@ -1,5 +1,7 @@
-F:0.5:F
-F:0.2:F-F
-F:0.2:F+F
-F:0.2:[F{F+F+F+F}]
-F:0.2:F[F{F+F-F-F+F-F-F-F}]
+#axiom FFF
+#niter 10
+F@0.5->F
+F@0.2->F-F
+F@0.2->F+F
+F@0.2->[F{F+F+F+F}]
+F@0.2->F[F{F+F-F-F+F-F-F-F}]

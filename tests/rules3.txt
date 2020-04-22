@@ -1,1 +1,4 @@
-X:[-F{F+F+F+F}]FFX
+#axiom F
+#niter 4
+
+F->FF-[-F+F+F]+[+F-F-F]
