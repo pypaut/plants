@@ -2,6 +2,7 @@ use crate::pattern::{Pattern};
 use crate::ast::AstNode;
 use crate::lexer::{self, TokenType};
 use crate::symbolstring::SymbolString;
+use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt;
 use crate::symbol::Symbol;
@@ -879,6 +880,18 @@ fn get_param_value(ast: Box<AstNode>, i: usize) -> String {
     }
 }
 
+fn get_define_value(ast: Box<AstNode>, i: usize) -> Vec<String> {
+    let mut res = Vec::new();
+    if i + 1 >= ast.children.len() {
+        res.push("ERROR".to_string());
+        res.push("ERROR".to_string());
+    } else {
+        res.push(ast.children[i].data.clone());
+        res.push(ast.children[i+1].data.clone());
+    }
+    res
+}
+
 fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
     if ast.node_type != TokenType::Preproc {
         return;//invalid node type
@@ -888,7 +901,11 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
         "ignore" => {ctx.ignored = get_param_value(ast, 0);},
         "axiom" => {ctx.axion = get_param_value(ast, 0);},
         "niter" => {ctx.n_iter = get_param_value(ast, 0).parse::<usize>()
-            .expect("Invalid parameter formating for niter command.");}
+            .expect("Invalid parameter formating for niter command.");},
+        "define" => {
+            let def = get_define_value(ast, 0);
+            ctx.define.insert(def[0].clone(), def[1].clone());
+        }
         _ => {}
     };
 }
@@ -896,7 +913,7 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
 // Instantiate Pattern objects from a string.
 pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
     let mut result = Vec::new();
-    let mut ctx : IterCtx = IterCtx{ignored: String::new(), axion: String::new(), n_iter: 0};
+    let mut ctx : IterCtx = IterCtx{ignored: String::new(), axion: String::new(), n_iter: 0, define: HashMap::new()};
 
     for l in data.lines() {
         //println!("{}", l);
