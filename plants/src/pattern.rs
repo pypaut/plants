@@ -4,6 +4,7 @@ use std::cmp::Ordering::{Less, Equal, Greater};
 use std::cmp::Ordering;
 use std::iter::{Iterator, Rev};
 use std::str::Chars;
+use crate::iter_ctx::IterCtx;
 use crate::symbolstring::{SymbolString};
 use crate::symbol::Symbol;
 use crate::bool_exp::BoolExp;
@@ -284,7 +285,7 @@ impl Pattern {
         (false, Vec::new())
     }
 
-    pub fn test(&mut self, i : usize, s : &SymbolString, ignored : &str) -> bool {
+    pub fn test(&mut self, i : usize, s : &SymbolString, ignored : &str, ctx : &IterCtx) -> bool {
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
@@ -380,10 +381,15 @@ impl Pattern {
             let mut replace_vars = self.replacement.clone();
             let replace_vars = replace_vars.vars();
             for v in replace_vars {
-                if !bindings.contains_key(v) {
+                if !bindings.contains_key(v) && !ctx.define.contains_key(v) {
                     panic!("Could not read replacement variable in binding table.");
-                } else {
+                } else if bindings.contains_key(v) {
                     match self.replacement.set(v, bindings[v]) {
+                        Err(()) => {eprintln!("Could not set variable for replacement.");},
+                        _ => {}
+                    };
+                } else {
+                    match self.replacement.set(v, ctx.define[v].parse().unwrap()) {
                         Err(()) => {eprintln!("Could not set variable for replacement.");},
                         _ => {}
                     };
