@@ -1,7 +1,7 @@
 #niter 10
 #axiom A
 #define VAL 1.456
-#define VAL2 HAHA
+#define VAL2 2
 
 
 A->F(VAL)[+A][-A]

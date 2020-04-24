@@ -389,7 +389,7 @@ impl Pattern {
                         _ => {}
                     };
                 } else {
-                    match self.replacement.set(v, ctx.define[v].parse().unwrap()) {
+                    match self.replacement.set(v, ctx.define[v]) {
                         Err(()) => {eprintln!("Could not set variable for replacement.");},
                         _ => {}
                     };

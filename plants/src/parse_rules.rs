@@ -904,7 +904,7 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
             .expect("Invalid parameter formating for niter command.");},
         "define" => {
             let def = get_define_value(ast, 0);
-            ctx.define.insert(def[0].clone(), def[1].clone());
+            ctx.define.insert(def[0].clone(), def[1].clone().parse().unwrap());
         }
         _ => {}
     };
