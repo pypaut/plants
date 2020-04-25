@@ -223,7 +223,19 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 }
             },
             '!' => {
-                t.decrease(d_reason);
+                let mut has_parameter = false;
+
+                // Check for ( parameter
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    has_parameter = true;
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    t.set_size(parameter.parse().unwrap());
+                    i = e;
+                }
+
+                if !has_parameter {
+                    t.decrease(d_reason);
+                }
             },
             '\'' => {
                 current_color_i += 1;
