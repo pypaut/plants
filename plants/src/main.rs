@@ -35,7 +35,7 @@ fn main() -> Result<(), &'static str> {
 
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
-    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str);
+    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str, shapes);
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);

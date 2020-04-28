@@ -1,4 +1,5 @@
 #axiom F-F-F-F
 #niter 3
+#include H
 
 F->FF-F-F-F-F-F+F
