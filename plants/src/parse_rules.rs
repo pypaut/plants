@@ -913,7 +913,13 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
 // Instantiate Pattern objects from a string.
 pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
     let mut result = Vec::new();
-    let mut ctx : IterCtx = IterCtx{ignored: String::new(), axion: String::new(), n_iter: 0, define: HashMap::new()};
+    let mut ctx : IterCtx = IterCtx{
+                            ignored: String::new(),
+                            axion: String::new(),
+                            n_iter: 0,
+                            define: HashMap::new(),
+                            include: Vec::new()
+    };
 
     for l in data.lines() {
         //println!("{}", l);
