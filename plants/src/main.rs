@@ -5,6 +5,7 @@ use crate::symbolstring::SymbolString;
 mod pattern;
 mod iterate;
 mod parse_rules;
+mod parse_shapes;
 mod lexer;
 mod ast;
 mod arith;
@@ -27,6 +28,10 @@ fn main() -> Result<(), &'static str> {
     } else {0};
     let save_iter = if save_iter == 1 {true} else {false};
     //let iterations = args[3].parse::<i32>().unwrap();   // Wanted depth
+
+    let shapes_str = fs::read_to_string("../shapes")
+        .expect("Failed reading shapes file.");
+    let shapes = parse_shapes::parse_shapes(&shapes_str);
 
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
