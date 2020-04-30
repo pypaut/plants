@@ -229,6 +229,13 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 current_color_i += 1;
                 current_color_i %= nb_colors;
             },
+            '$' => {
+                let minus_g = Vector3::new(0f64, 0f64, 1f64);
+                let new_left = minus_g.cross(t.heading()).normalized();
+                let new_up = t.heading().cross(new_left);
+                t = Turtle::new_param(t.pos(), t.heading(), new_left,
+                new_up, t.size());
+            },
             _ => {  // Unknown char : do nothing & ignore parameters, if any
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let mut e = i + 1;

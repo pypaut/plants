@@ -51,6 +51,14 @@ impl Vector3 {
         let dot = self.x * v.x + self.y * v.y + self.z * v.z;
         dot
     }
+
+    pub fn cross(&self, v : Vector3) -> Vector3 {
+        Vector3::new(
+            self.y * v.z - self.z * v.y,
+            self.z * v.x - self.x * v.z,
+            self.x * v.y - self.y * v.x
+        )
+    }
 }
 
 impl Mul<f64> for Vector3 {
