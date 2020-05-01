@@ -6,7 +6,7 @@ use crate::arith;
     fn set(&mut self, var: &str, val: f32) -> Result<(), ()>;
 }*/
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum BoolExp {
     BinOp(BinOp),
     Unop(UnOp),
@@ -48,7 +48,7 @@ pub enum BinOpType {
     Or
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BinOp {
     left: Box<BoolExp>,
     right: Box<BoolExp>,
@@ -101,7 +101,7 @@ pub enum UnOpType {
     Not
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct UnOp {
     exp: Box<BoolExp>,
     operator: fn(bool) -> bool
@@ -156,7 +156,7 @@ impl CompType {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct CompOp {
     left: Box<arith::Arith>,
     right: Box<arith::Arith>,
@@ -225,7 +225,7 @@ impl CompOp {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Bool {
     pub value: bool
 }

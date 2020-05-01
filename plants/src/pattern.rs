@@ -4,12 +4,14 @@ use std::cmp::Ordering::{Less, Equal, Greater};
 use std::cmp::Ordering;
 use std::iter::{Iterator, Rev};
 use std::str::Chars;
-use crate::iter_ctx::IterCtx;
+use crate::iter_ctx::{IterCtx, LightCtx};
 use crate::symbolstring::{SymbolString};
 use crate::symbol::Symbol;
 use crate::bool_exp::BoolExp;
 use std::collections::HashMap;
+use std::ptr::replace;
 
+#[derive(Debug)]
 pub struct Pattern {
     pub pattern : Symbol,       // Initial character
     pub replacement : SymbolString, // Replacement string
@@ -186,6 +188,36 @@ impl Pattern {
         Pattern{pattern: pat, replacement: r, p, left, right, cond}
     }
 
+    pub fn rule_set(&mut self, rule_set: &String) {
+        //modify rule_set in all symbolstrings
+        self.pattern.rule_set = rule_set.clone();
+        self.replacement.rule_set(rule_set);
+        match &mut self.left {
+            Some(l) => {l.rule_set(rule_set);},
+            _ => {}
+        };
+
+        match &mut self.right {
+            Some(r) => {r.rule_set(rule_set);},
+            _ => {}
+        };
+    }
+
+    pub fn replace(&mut self, alias: &String, value: &SymbolString) {
+        //replace in replacement, left and right
+        //no replacement in pattern because we do not have support for multiple symbols in a pattern
+        self.replacement.replace(alias, value);
+        match &mut self.left {
+            Some(l) => {l.replace(alias, value);},
+            _ => {}
+        };
+
+        match &mut self.right {
+            Some(r) => {r.replace(alias, value);},
+            _ => {}
+        };
+    }
+
     fn rctx<'a, I>(it : I,
                    ctx : &mut std::slice::Iter<'_, Symbol>,
                    ignore : &str) -> (bool, Vec<f32>)
@@ -285,7 +317,8 @@ impl Pattern {
         (false, Vec::new())
     }
 
-    pub fn test(&mut self, i : usize, s : &SymbolString, ignored : &str, ctx : &IterCtx) -> bool {
+    pub fn test(&mut self, i : usize, s : &SymbolString, ctx : &LightCtx) -> bool {
+        let ignored = &ctx.ignored;
         let mut rng = thread_rng();
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
