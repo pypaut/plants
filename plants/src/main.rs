@@ -59,8 +59,22 @@ fn main() -> Result<(), &'static str> {
     let mut res = SymbolString::from_string(ctx.axion.as_str())?;
 
     for i in 0..ctx.n_iter {
-        res = iterate::iterate(&res,
-                               &mut rules, &ctx);
+        // Iterate once, on each shape
+        for (key, val) in shapesRes.clone().iter() {  // key : alias, val : current res of shape
+            let new_val : SymbolString = iterate::iterate(
+                &val,
+                &mut shapesRules.get_mut(key).unwrap(),
+                &shapesCtx.get(key).unwrap()
+            );
+            *shapesRes.get_mut(key).unwrap() = new_val;
+        }
+
+        // Iterate once on final res
+        res = iterate::iterate(
+            &res,
+            &mut rules,
+            &ctx
+        );
         //println!("-----------------------------");
         if save_iter {
             let out_tmp = format!("{}{}", out_file, i.to_string());
