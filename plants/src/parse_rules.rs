@@ -892,7 +892,7 @@ fn get_define_value(ast: Box<AstNode>, i: usize) -> Vec<String> {
     res
 }
 
-fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, IterCtx>) {
+fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
     if ast.node_type != TokenType::Preproc {
         return;//invalid node type
     }
@@ -907,25 +907,24 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, I
             ctx.define.insert(def[0].clone(), def[1].clone().parse().unwrap());
         },
         "include" => {
-            let included = get_param_value(ast, 0);
-            if !shapes.contains_key(&included) {
-                println!("This shape does not exist!");
-            }
-            ctx.include.push(included);
+            let alias_file = get_define_value(ast, 0);
+            let alias = alias_file[0].clone();
+            let file = alias_file[1].clone();
+            ctx.include.insert(alias, file);
         },
         _ => {}
     };
 }
 
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str, shapes : HashMap<String, IterCtx>) -> (Vec<Pattern>, IterCtx) {
+pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
     let mut result = Vec::new();
     let mut ctx : IterCtx = IterCtx{
-                            ignored: String::new(),
-                            axion: String::new(),
-                            n_iter: 0,
-                            define: HashMap::new(),
-                            include: Vec::new()
+                                ignored  : String::new(),
+                                axion    : String::new(),
+                                n_iter   : 0,
+                                define   : HashMap::new(),
+                                include  : HashMap::new()
     };
 
     for l in data.lines() {
@@ -944,7 +943,7 @@ pub fn parse_rules(data : &str, shapes : HashMap<String, IterCtx>) -> (Vec<Patte
                                 println!("Error while creating rule: {}", e);
                             }
                     }},
-                    TokenType::Preproc => {read_preproc(ast, &mut ctx, &shapes);},
+                    TokenType::Preproc => {read_preproc(ast, &mut ctx);},
                     _ => {}
                 };
             },

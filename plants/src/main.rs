@@ -19,7 +19,6 @@ mod iter_ctx;
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = env::args().collect();
-    //let axiom = args[1].clone();                        // Base word to iterate upon
     let in_file = args[1].clone();                      // File containing rules
     let out_file = args[2].clone(); //output file name
     let save_iter = if args.len() > 3 {
@@ -27,34 +26,33 @@ fn main() -> Result<(), &'static str> {
             .parse::<usize>().expect("Invalid value for save_iter.")
     } else {0};
     let save_iter = if save_iter == 1 {true} else {false};
-    //let iterations = args[3].parse::<i32>().unwrap();   // Wanted depth
-
-    // Parse shapes
-    let shapes_str = fs::read_dir("../grammars").unwrap();
-    let mut shapesIterCtx : HashMap<String, iter_ctx::IterCtx> = HashMap::new();
-    let mut shapesPatterns : HashMap<String, Vec<pattern::Pattern>> = HashMap::new();
-
-    for shape in shapes_str {
-        let shape_str = match shape.unwrap().file_name().into_string() {
-            Ok(string) => string,
-            Err(e) => {
-                println!("Error parsing shapes.");
-                String::from("")
-            }
-        };
-        let shape_rules_str = fs::read_to_string(shape_str.clone())
-            .expect("Failed reading file");
-        let (rules, ctx) = parse_rules::parse_rules(&shape_rules_str, HashMap::new());
-
-        shapesIterCtx.insert(shape_str.clone(), ctx);
-        shapesPatterns.insert(shape_str.clone(), rules);
-    }
-
 
     // Parse rules
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
-    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str, shapesIterCtx);
+    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str);
+
+    // Parse included rules
+    let mut shapesRules : HashMap<String, Vec<pattern::Pattern>> = HashMap::new();
+    let mut shapesCtx : HashMap<String, iter_ctx::IterCtx> = HashMap::new();
+    let mut shapesRes : HashMap<String, SymbolString> = HashMap::new();
+
+    for (alias, file) in ctx.include.iter() {
+        let shape_rule_str = fs::read_to_string(file)
+            .expect("Failed reading file");
+        let (shape_rules, shape_ctx) = parse_rules::parse_rules(&shape_rule_str);
+        shapesRules.insert(alias.to_string(), shape_rules);
+        shapesCtx.insert(alias.to_string(), shape_ctx);
+
+        let shape_res = match SymbolString::from_string(shapesCtx.get(alias).unwrap().axion.as_str()) {
+            Ok(sym) => sym,
+            Err(e) => {
+                println!("Error parsing included rules : {}", e);
+                SymbolString{symbols : Vec::new()}
+            }
+        };
+        shapesRes.insert(alias.to_string(), shape_res);
+    }
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);

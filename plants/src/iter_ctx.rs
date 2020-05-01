@@ -7,5 +7,5 @@ pub struct IterCtx {
     pub axion: String,//axiom used to initialize
     pub n_iter: usize,//number of iterations
     pub define: HashMap<String, f32>,//saved constants
-    pub include: Vec<String>//included predefined shapes
+    pub include: HashMap<String, String>//included predefined shapes
 }
