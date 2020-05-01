@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use crate::symbolstring::SymbolString;
@@ -5,7 +6,6 @@ use crate::symbolstring::SymbolString;
 mod pattern;
 mod iterate;
 mod parse_rules;
-mod parse_shapes;
 mod lexer;
 mod ast;
 mod arith;
@@ -29,13 +29,32 @@ fn main() -> Result<(), &'static str> {
     let save_iter = if save_iter == 1 {true} else {false};
     //let iterations = args[3].parse::<i32>().unwrap();   // Wanted depth
 
-    let shapes_str = fs::read_to_string("../shapes")
-        .expect("Failed reading shapes file.");
-    let shapes = parse_shapes::parse_shapes(&shapes_str);
+    // Parse shapes
+    let shapes_str = fs::read_dir("../grammars").unwrap();
+    let mut shapesIterCtx : HashMap<String, iter_ctx::IterCtx> = HashMap::new();
+    let mut shapesPatterns : HashMap<String, Vec<pattern::Pattern>> = HashMap::new();
 
+    for shape in shapes_str {
+        let shape_str = match shape.unwrap().file_name().into_string() {
+            Ok(string) => string,
+            Err(e) => {
+                println!("Error parsing shapes.");
+                String::from("")
+            }
+        };
+        let shape_rules_str = fs::read_to_string(shape_str.clone())
+            .expect("Failed reading file");
+        let (rules, ctx) = parse_rules::parse_rules(&shape_rules_str, HashMap::new());
+
+        shapesIterCtx.insert(shape_str.clone(), ctx);
+        shapesPatterns.insert(shape_str.clone(), rules);
+    }
+
+
+    // Parse rules
     let rule_str = fs::read_to_string(in_file)
         .expect("Failed reading file.");
-    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str, shapes);
+    let (mut rules, ctx) = parse_rules::parse_rules(&rule_str, shapesIterCtx);
 
     //println!("{:?}", rules);
     //println!("{:?}", ignored);

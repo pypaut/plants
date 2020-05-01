@@ -892,7 +892,7 @@ fn get_define_value(ast: Box<AstNode>, i: usize) -> Vec<String> {
     res
 }
 
-fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, String>) {
+fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, IterCtx>) {
     if ast.node_type != TokenType::Preproc {
         return;//invalid node type
     }
@@ -907,7 +907,7 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, S
             ctx.define.insert(def[0].clone(), def[1].clone().parse().unwrap());
         },
         "include" => {
-            let included = String::from(get_param_value(ast, 0));
+            let included = get_param_value(ast, 0);
             if !shapes.contains_key(&included) {
                 println!("This shape does not exist!");
             }
@@ -918,7 +918,7 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx, shapes: &HashMap<String, S
 }
 
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str, shapes : HashMap<String, String>) -> (Vec<Pattern>, IterCtx) {
+pub fn parse_rules(data : &str, shapes : HashMap<String, IterCtx>) -> (Vec<Pattern>, IterCtx) {
     let mut result = Vec::new();
     let mut ctx : IterCtx = IterCtx{
                             ignored: String::new(),
