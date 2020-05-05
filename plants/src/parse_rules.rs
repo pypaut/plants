@@ -2,6 +2,7 @@ use crate::pattern::{Pattern};
 use crate::ast::AstNode;
 use crate::lexer::{self, TokenType};
 use crate::symbolstring::SymbolString;
+use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::fmt;
 use crate::symbol::Symbol;
@@ -820,7 +821,8 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     let mut pattern : Symbol = Symbol{
         sym: 'a',
         var_names: Vec::new(),
-        params: Vec::new()
+        params: Vec::new(),
+        rule_set: String::new()
     };
     let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
     let mut has_pattern : bool = false;
@@ -832,11 +834,11 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
         match tok.node_type {
             TokenType::Rctx => {
                 //println!("Rctx");
-                right = Some(SymbolString::from_ast(tok)?);
+                right = Some(SymbolString::from_ast(tok, String::new())?);
             },
             TokenType::Lctx => {
                 //println!("Lctx");
-                left = Some(SymbolString::from_ast(tok)?);
+                left = Some(SymbolString::from_ast(tok, String::new())?);
             },
             TokenType::Prob => {
                 //println!("Prob");
@@ -849,7 +851,7 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
             },
             TokenType::Replacement => {
                 //println!("Replacement");
-                replacement = SymbolString::from_ast(tok)?;
+                replacement = SymbolString::from_ast(tok, String::new())?;
                 has_replacement = true;
             },
             TokenType::Cond => {
@@ -879,6 +881,18 @@ fn get_param_value(ast: Box<AstNode>, i: usize) -> String {
     }
 }
 
+fn get_define_value(ast: Box<AstNode>, i: usize) -> Vec<String> {
+    let mut res = Vec::new();
+    if i + 1 >= ast.children.len() {
+        res.push("ERROR".to_string());
+        res.push("ERROR".to_string());
+    } else {
+        res.push(ast.children[i].data.clone());
+        res.push(ast.children[i+1].data.clone());
+    }
+    res
+}
+
 fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
     if ast.node_type != TokenType::Preproc {
         return;//invalid node type
@@ -886,17 +900,34 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
 
     match ast.data.as_str() {
         "ignore" => {ctx.ignored = get_param_value(ast, 0);},
-        "axiom" => {ctx.axion = get_param_value(ast, 0);},
+        "axiom" => {ctx.axiom = get_param_value(ast, 0);},
         "niter" => {ctx.n_iter = get_param_value(ast, 0).parse::<usize>()
-            .expect("Invalid parameter formating for niter command.");}
+            .expect("Invalid parameter formating for niter command.");},
+        "define" => {
+            let def = get_define_value(ast, 0);
+            ctx.define.insert(def[0].clone(), def[1].clone().parse().unwrap());
+        },
+        "include" => {
+            let alias_file = get_define_value(ast, 0);
+            let alias = alias_file[0].clone();
+            let file = alias_file[1].clone();
+            ctx.include.insert(alias, file);
+        },
         _ => {}
     };
 }
 
 // Instantiate Pattern objects from a string.
-pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
+pub fn parse_rules(data : &str) -> IterCtx {
     let mut result = Vec::new();
-    let mut ctx : IterCtx = IterCtx{ignored: String::new(), axion: String::new(), n_iter: 0};
+    let mut ctx : IterCtx = IterCtx{
+                                ignored  : String::new(),
+                                axiom: String::new(),
+                                n_iter   : 0,
+                                define   : HashMap::new(),
+                                include  : HashMap::new(),
+                                patterns : Vec::new()
+    };
 
     for l in data.lines() {
         //println!("{}", l);
@@ -925,7 +956,8 @@ pub fn parse_rules(data : &str) -> (Vec<Pattern>, IterCtx) {
         };
     }
 
-    println!("{:?}", ctx);
+    //println!("{:?}", ctx);
     result.sort_by(|a, b| a.cmp_pat(b));
-    (result, ctx)
+    ctx.patterns = result;
+    ctx
 }

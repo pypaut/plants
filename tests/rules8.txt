@@ -1,5 +1,8 @@
 #niter 10
 #axiom A
+#define VAL 1.456
+#define VAL2 2
 
-A->F(1)[+A][-A]
-F(s)->F(s*1.456)
+
+A->F(VAL)[+A][-A]
+F(s)->F(s*VAL)

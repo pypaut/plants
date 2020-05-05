@@ -7,14 +7,14 @@ use crate::parse_rules;
 use crate::lexer::lexer;
 use std::iter::FromIterator;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SymbolString {
     pub symbols : Vec<Symbol>
 }
 
 
 impl SymbolString {
-    pub fn from_ast(exp: &Box<AstNode>) -> Result<SymbolString, &'static str> {
+    pub fn from_ast(exp: &Box<AstNode>, rule_set: String) -> Result<SymbolString, &'static str> {
         if exp.node_type != TokenType::Lctx && exp.node_type != TokenType::Rctx
             && exp.node_type != TokenType::Replacement && exp.node_type != TokenType::Pred
         && exp.node_type != TokenType::Pat {
@@ -29,7 +29,8 @@ impl SymbolString {
                             Symbol{
                                 sym: 'a',
                                 var_names: Vec::new(),
-                                params: Vec::new()
+                                params: Vec::new(),
+                                rule_set: rule_set.clone()
                        }}
                    }
                 }).collect();
@@ -44,11 +45,34 @@ impl SymbolString {
             _ => {return Err("Could not parse expression to SymbolString");}
         };
 
-        SymbolString::from_ast(&ast)
+        SymbolString::from_ast(&ast, "".to_string())
     }
 
     pub fn empty() -> SymbolString {
         SymbolString{symbols: Vec::new()}
+    }
+
+    pub fn rule_set(&mut self, rule_set: &String) {
+        for sym in &mut self.symbols {
+            sym.rule_set = rule_set.clone();
+        }
+    }
+
+    pub fn replace(&mut self, alias: &String, value: &SymbolString) {
+        let mut res = Vec::new();
+        //for each symbol:
+        for sym in &self.symbols {
+            //test if symbol is replacable
+            if sym.eq_alias(alias) {
+                //if yes: append value to result
+                res.append(&mut value.clone().symbols);
+            } else {
+                //if not: append symbol to result
+                res.push(sym.clone());
+            }
+        }
+        //replace symbols by result
+        self.symbols = res;
     }
 
     pub fn vars(&mut self) -> Vec<&str> {

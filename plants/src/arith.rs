@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Arith {
     Var(Var),
     Op(ArithOp)
@@ -31,7 +31,7 @@ impl Arith {
 }
 
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Var {
     name: Option<String>,
     value: f32
@@ -72,7 +72,7 @@ impl Var {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ArithOp {
     left: Box<Arith>,
     right: Box<Arith>,

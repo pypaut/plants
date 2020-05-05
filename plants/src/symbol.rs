@@ -5,23 +5,24 @@ use crate::ast::AstNode;
 use crate::lexer::{lexer, TokenType};
 use crate::symbolstring::SymbolString;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Symbol {
     pub sym: char,
     pub var_names : Vec<String>,
-    pub params: Vec<Box<Arith>>
+    pub params: Vec<Box<Arith>>,
+    pub rule_set : String//rule set name for replacing the symbol
 }
 
 impl Symbol {
-    pub fn new(sym: char, params: Vec<Box<Arith>>) -> Symbol {
-        Symbol{sym, params, var_names: Vec::new()}
+    pub fn new(sym: char, params: Vec<Box<Arith>>, rule_set: String) -> Symbol {
+        Symbol{sym, params, var_names: Vec::new(), rule_set}
     }
 
-    pub fn new_with_values(sym: char, params: Vec<f32>) -> Symbol {
+    pub fn new_with_values(sym: char, params: Vec<f32>, rule_set: String) -> Symbol {
         let params = params.iter()
             .map(|x| {arith::Var::new_value(*x)}).collect();
 
-        Symbol::new(sym, params)
+        Symbol::new(sym, params, rule_set)
     }
 
     pub fn from_ast(exp: &Box<AstNode>) -> Result<Symbol, &'static str> {
@@ -42,9 +43,18 @@ impl Symbol {
                     }).map(|x| {x.unwrap()}).collect();
                 Ok(Symbol{sym: sym.chars().nth(0).unwrap(),
                     var_names: Vec::new(),
-                    params
+                    params,
+                    rule_set: String::new()
                 })
             }
+        }
+    }
+
+    pub fn eq_alias(&self, alias: &String) -> bool {
+        if !self.params.is_empty() || self.rule_set != "root".to_string() {
+            false//if we have a parameter or we are not from the root file we return false
+        } else {
+            self.sym.to_string() == alias.to_string()//test if we have the correct symbol
         }
     }
 
