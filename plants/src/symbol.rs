@@ -87,6 +87,7 @@ impl Symbol {
         if self.params.len() == 0 {//only parameter-less symbols can be objects
             if self.object {
                 res = String::from("~(");
+                res.push_str(&self.rule_set);
                 res.push(self.sym);
                 res.push(')');
                 res

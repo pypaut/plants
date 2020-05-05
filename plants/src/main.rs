@@ -16,6 +16,9 @@ mod symbol;
 mod symbolstring;
 mod iter_ctx;
 
+fn get_output_string(header: &String, contents: &SymbolString) -> String {
+    format!("{}\n{}", header, contents.to_string())
+}
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = env::args().collect();
@@ -82,6 +85,15 @@ fn main() -> Result<(), &'static str> {
 
     //add root ctx to IterCtx map
     shapesCtx.insert("root".to_string(), ctx);
+
+    //create the output header string
+    let mut output_header = String::from("#");
+    for (rule_set, ctx) in &shapesCtx {
+        output_header.push_str(&ctx.get_object_header(rule_set));
+    }
+    let output_header = output_header;
+
+    //iterate
     let n_iter = shapesCtx["root"].n_iter;
     for i in 0..n_iter {
         // Iterate once on final res
@@ -93,12 +105,12 @@ fn main() -> Result<(), &'static str> {
         if save_iter {
             let out_tmp = format!("{}{}", out_file, i.to_string());
             println!("Saving {}", out_tmp);
-            fs::write(out_tmp, res.to_string())
+            fs::write(out_tmp, get_output_string(&output_header, &res))
                 .expect("Unable to write to temporary output file.");
         }
     }
 
-    fs::write(out_file, res.to_string())
+    fs::write(out_file, get_output_string(&output_header, &res))
         .expect("Unable to write to output file");
 
     Ok(())
