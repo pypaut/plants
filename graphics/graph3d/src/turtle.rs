@@ -55,6 +55,10 @@ impl Turtle {
         self.size *= reason;
     }
 
+    pub fn set_size(&mut self, size : f64) {
+        self.size = size;
+    }
+
     pub fn rot_pitch(&mut self, a: f64) {  // y
         let quat = quaternion::axis_angle(self.left.to_arr(), a);
 

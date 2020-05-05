@@ -32,3 +32,7 @@ test7:
 test8:
 	./target/debug/plants ../tests/rules8.txt result.txt
 	python3 ../graphics/src/2d.py result.txt 22.5
+
+bush:
+	./target/debug/plants ../grammars/bush result.txt
+	../graphics/graph3d/target/debug/graph3d result.txt result 22.5 10 0.5 0.1 5
