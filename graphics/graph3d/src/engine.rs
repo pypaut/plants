@@ -213,7 +213,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
             '|' => {t.rot_yaw(PI);},
             '[' => {stack.push(t.clone());},
             ']' => {t = stack.pop().unwrap_or(t);},
-            '{' => {leaf_mode = 1;},  // TODO: How can we manage leaves?
+            '{' => {leaf_mode = 1;},  // :smirk:
             '}' => {
                 leaf_mode = 0;
                 if leaf_mode == 0 {  // Ending a leaf
@@ -247,6 +247,12 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 let new_up = t.heading().cross(new_left);
                 t = Turtle::new_param(t.pos(), t.heading(), new_left,
                 new_up, t.size());
+            },
+            '.' => {
+                if leaf_mode == 0 {
+                    println!("ERROR : dot found out of leaf.");
+                }
+                tmp_leaf.pts.push(t.pos().clone());
             },
             _ => {  // Unknown char : do nothing & ignore parameters, if any
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
