@@ -17,7 +17,11 @@ mod symbolstring;
 mod iter_ctx;
 
 fn get_output_string(header: &String, contents: &SymbolString) -> String {
-    format!("{}\n{}", header, contents.to_string())
+    if header.len() > 0 {
+        format!("{}\n{}", header, contents.to_string())
+    } else {
+        contents.to_string()
+    }
 }
 
 fn main() -> Result<(), &'static str> {
@@ -91,7 +95,11 @@ fn main() -> Result<(), &'static str> {
     for (rule_set, ctx) in &shapesCtx {
         output_header.push_str(&ctx.get_object_header(rule_set));
     }
-    let output_header = output_header;
+    let output_header = if output_header.len() > 1 {
+        output_header
+    } else {
+        String::new()
+    };
 
     //iterate
     let n_iter = shapesCtx["root"].n_iter;
