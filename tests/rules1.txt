@@ -1,5 +1,5 @@
 #axiom F-F-F-F
 #niter 3
-#include H
+#include H ../grammars/simple_leaf
 
 F->FF-F-F-F-F-F+F

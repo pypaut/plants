@@ -36,3 +36,7 @@ test8:
 bush:
 	./target/debug/plants ../grammars/bush result.txt
 	../graphics/graph3d/target/debug/graph3d result.txt result 22.5 10 0.5 0.1 5
+
+feuille2d:
+	./target/debug/plants ../tests/rules9.txt result.txt
+	python3 ../graphics/src/2d.py result.txt 22.5 leaf
