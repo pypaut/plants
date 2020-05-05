@@ -822,7 +822,8 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
         sym: 'a',
         var_names: Vec::new(),
         params: Vec::new(),
-        rule_set: String::new()
+        rule_set: String::new(),
+        object: false
     };
     let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
     let mut has_pattern : bool = false;

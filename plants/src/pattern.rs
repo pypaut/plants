@@ -218,6 +218,12 @@ impl Pattern {
         };
     }
 
+    pub fn set_obj(&mut self, name: &String) {
+        //do not need to set obj property on pattern and contexts because thay will never
+        //be written in the final file
+        self.replacement.set_obj(name);
+    }
+
     fn rctx<'a, I>(it : I,
                    ctx : &mut std::slice::Iter<'_, Symbol>,
                    ignore : &str) -> (bool, Vec<f32>)
