@@ -93,7 +93,7 @@ fn main() -> Result<(), &'static str> {
     //create the output header string
     let mut output_header = String::from("#");
     for (rule_set, ctx) in &shapesCtx {
-        output_header.push_str(&ctx.get_object_header(rule_set));
+        output_header.push_str(&ctx.get_object_header(rule_set, &file_folder));
     }
     let output_header = if output_header.len() > 1 {
         output_header

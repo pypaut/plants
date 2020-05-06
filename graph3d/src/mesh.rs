@@ -16,8 +16,13 @@ impl Mesh {
     }
 
     pub fn load(path: &String) -> Mesh {
-        let in_str = fs::read_to_string(path)
-            .expect("Failed reading file.");
+        let in_str = match fs::read_to_string(path) {
+            Ok(s) => s,
+            _ => {
+                println!("Could not load mesh at: {}", path);
+                return Mesh::new();
+            }
+        };
 
         let lines = in_str.lines();
 

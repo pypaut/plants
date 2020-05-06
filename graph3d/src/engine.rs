@@ -87,8 +87,8 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
 
         let mut map = HashMap::new();
         loop {
-            let object_name = match split.next() {
-                Some(s) => s,
+            let object_name : String = match split.next() {
+                Some(s) => s.chars().skip(1).collect(),
                 _ => break
             };
             let object_mesh = match split.next() {
@@ -97,7 +97,7 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
             };
 
             //println!("{}", object_mesh.clone().get_str());
-            map.insert(object_name.to_string(), object_mesh);
+            map.insert(object_name, object_mesh);
         }
 
         let mut i = 0;

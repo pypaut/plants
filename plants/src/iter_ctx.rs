@@ -18,13 +18,13 @@ impl IterCtx {
         LightCtx{ignored: self.ignored.clone(), define: self.define.clone()}
     }
 
-    pub fn get_object_header(&self, rule_set: &String) -> String {
+    pub fn get_object_header(&self, rule_set: &String, folder: &String) -> String {
         let mut result = String::new();
         for (obj, file) in &self.objects {
             let mut tmp = rule_set.clone();
             tmp.push_str(obj);
             tmp.push(' ');
-            tmp.push_str(file);
+            tmp.push_str(format!("{}/{}", folder, file).as_str());
             tmp.push(' ');
             result.push_str(&tmp);
         }

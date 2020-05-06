@@ -48,15 +48,15 @@ ls_tmp=`ls $out_tmp`
 
 #run graph3D on all intermediary output and save to final output dir
 run_graph () {
-    cd "graphics/graph3d"
+    cd "graph3d"
     pwd
-    out_path="../../$out_dir"
+    out_path="../$out_dir"
     for f in $ls_tmp; do
-        file_in="../../$out_tmp/$f"
-        file_out="../../$out_dir/$f"
+        file_in="../$out_tmp/$f"
+        file_out="../$out_dir/$f"
         cargo run --release -- "$file_in" "$file_out" $angle $dist 2> /dev/null
     done
-    cd ../..
+    cd ..
 }
 
 run_graph
