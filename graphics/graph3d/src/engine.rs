@@ -79,14 +79,31 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
     if s.as_bytes()[0] as char == '#' {
         let mut lines = s.lines();
         //get only the first line and split it
-        let split = match lines.next() {
+        let mut split = match lines.next() {
             Some(l) => l.split(" "),
             None => return (0, HashMap::new())
         };
 
         //FIXME fill a hashmap with object names and corresponding meshes
+        let mut map = HashMap::new();
+        loop {
+            let object_name = match split.next() {
+                Some(s) => s,
+                _ => break
+            };
+            let object_mesh = match split.next() {
+                Some(s) => Mesh::load(&s.to_string()),
+                _ => return (0, HashMap::new())
+            };
 
-        (0, HashMap::new())
+            map.insert(object_name.to_string(), object_mesh);
+        }
+
+        let mut i = 0;
+        while s.as_bytes()[i] as char != '\n' {
+            i += 1;
+        }
+        (i, map)
     } else {
         (0, HashMap::new())
     }
@@ -111,10 +128,9 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
     let mut tmp_leaf = Leaf{pts: Vec::new(), color_i: current_color_i};
 
     let len = s.len();
-    let mut i = 0;
 
     //read header
-    //use a separate function
+    let (mut i, mesh_map) = read_header(s);
 
     while i < len {
         // Read characters and add data to the output file
