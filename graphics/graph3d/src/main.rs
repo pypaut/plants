@@ -9,6 +9,7 @@ mod engine;
 mod mesh;
 mod turtle;
 mod vector3;
+mod object;
 
 
 fn main() {

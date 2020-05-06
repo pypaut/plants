@@ -14,6 +14,10 @@ impl Mesh {
             leaf_faces: Vec::new()}
     }
 
+    pub fn load(path: &String) -> Mesh {
+        Mesh::new()//FIXME
+    }
+
     pub fn add_vert(&mut self, p : &vector3::Vector3) -> usize {
         let len = self.verts.len();
         self.verts.push(p.clone());

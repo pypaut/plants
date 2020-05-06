@@ -7,6 +7,7 @@ use crate::vector3;
 use turtle::Turtle;
 use mesh::Mesh;
 use vector3::Vector3;
+use std::collections::HashMap;
 
 
 #[derive(Clone, Copy)]
@@ -74,6 +75,22 @@ fn get_parameter(s : &str, i : usize, len : usize) -> (&str, usize) {
     (parameter, e)
 }
 
+pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
+    if s.as_bytes()[0] as char == '#' {
+        let mut lines = s.lines();
+        //get only the first line and split it
+        let split = match lines.next() {
+            Some(l) => l.split(" "),
+            None => return (0, HashMap::new())
+        };
+
+        //FIXME fill a hashmap with object names and corresponding meshes
+
+        (0, HashMap::new())
+    } else {
+        (0, HashMap::new())
+    }
+}
 
 pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64, nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>) {
     if d_reason > 1.0 {
@@ -95,6 +112,9 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
     let len = s.len();
     let mut i = 0;
+
+    //read header
+    //use a separate function
 
     while i < len {
         // Read characters and add data to the output file
