@@ -75,6 +75,21 @@ impl Mesh {
             self.leaf_faces.push(f.clone());
     }
 
+    pub fn merge(&mut self, other: &Mesh) {
+        //compute offset
+        let offset = self.verts.len();
+
+        //add verts to mesh
+        for v in &other.verts {
+            self.verts.push(v.clone());
+        }
+
+        //add faces with index offset (use leaf_faces to support n-gons)
+        for f in &other.leaf_faces {
+            self.leaf_faces.push(f.iter().map(|x| x + offset).collect());
+        }
+    }
+
     pub fn get_str(self) -> String {
         let mut res = String::new();
         for v in self.verts {

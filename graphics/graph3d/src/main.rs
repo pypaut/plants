@@ -53,13 +53,15 @@ fn main() {
 
     // Generate segments
     let nb_colors : i64 = (&colors).len().try_into().unwrap();
-    let (segments, leaves) = engine::read_str(&in_str,
+    let (segments,
+        leaves,
+        objects) = engine::read_str(&in_str,
                                       dist, angle * (PI / 180.0), (min_d, max_d),
                                               reason_d,
                                               nb_colors);
 
     // Generate & print geometry
-    let meshes = engine::gen_geometry(segments, leaves, nb_colors);  // Meshes are indexed with their color index
+    let meshes = engine::gen_geometry(segments, leaves, objects, nb_colors);  // Meshes are indexed with their color index
 
     for i in 0..nb_colors {  // nb_colors == nb_meshes
         let j : usize = i as usize;

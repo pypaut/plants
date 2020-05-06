@@ -8,6 +8,7 @@ use turtle::Turtle;
 use mesh::Mesh;
 use vector3::Vector3;
 use std::collections::HashMap;
+use crate::object::Object;
 
 
 #[derive(Clone, Copy)]
@@ -109,7 +110,12 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
     }
 }
 
-pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64, nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>) {
+pub fn read_str(s : &str,
+                dist : f64,
+                angle : f64,
+                d_limits : (f64, f64),
+                d_reason : f64,
+                nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>, Vec<Object>) {
     if d_reason > 1.0 {
         panic!("Invalid reason.");
     }
@@ -122,6 +128,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
     let mut segments : Vec<Segment> = Vec::new();
     let mut leaves : Vec<Leaf> = Vec::new();
+    let mut objects : Vec<Object> = Vec::new();
 
     let max_d_delta = d_limits.1 - d_limits.0;//max - min
 
@@ -284,6 +291,18 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 t = Turtle::new_param(t.pos(), t.heading(), new_left,
                 new_up, t.size());
             },
+            '~' => {
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    match mesh_map.get(parameter) {
+                        Some(mesh) => {
+                            objects.push(Object::new(mesh.clone(), t));
+                        },
+                        _ => {}
+                    }
+                    i = e;
+                }
+            },
             _ => {  // Unknown char : do nothing & ignore parameters, if any
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let mut e = i + 1;
@@ -298,7 +317,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
         i += 1;
     }
 
-    (process_segments(segments), leaves)
+    (process_segments(segments), leaves, objects)
 }
 
 
@@ -333,7 +352,8 @@ fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
     new_segments
 }
 
-pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64) -> Vec<Mesh> {
+pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>,
+                    objects : Vec<Object>, nb_colors: i64) -> Vec<Mesh> {
 
     let mut meshes : Vec<Mesh> = Vec::new();
 
@@ -389,6 +409,11 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64)
             verts.push(meshes[current_color_i].add_vert(&v));
         }
         meshes[current_color_i].add_poly(verts);
+    }
+
+    for obj in objects {
+        //add all objects to result mesh
+        meshes[0].merge(&obj.get_transformed_mesh());
     }
 
     meshes
