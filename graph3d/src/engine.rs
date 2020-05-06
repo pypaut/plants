@@ -81,16 +81,14 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
         let mut lines = s.lines();
         //get only the first line and split it
         let mut split = match lines.next() {
-            Some(l) => l.split(" "),
+            Some(l) => l.trim().split(" "),
             None => return (0, HashMap::new())
         };
 
         let mut map = HashMap::new();
-        loop {
-            let object_name : String = match split.next() {
-                Some(s) => s.chars().skip(1).collect(),
-                _ => break
-            };
+        while let Some(object_name) = split.next() {
+            let object_name = object_name.chars().skip(1).collect();
+
             let object_mesh = match split.next() {
                 Some(s) => Mesh::load(&s.to_string()),
                 _ => return (0, HashMap::new())
@@ -368,15 +366,16 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>,
         let current_color_i : usize = s.color_i as usize;
 
         //println!("{:?}", s.a);
-        for i in 0..6 {  // Generate hexagons
+        let nb_face = 6;
+        for i in 0..nb_face {  // Generate hexagons
             let mut rot = s.a().clone();
-            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
+            rot.rot_roll((2.0 * PI / (nb_face as f64)) * (i as f64));
             //println!("{:?}", rot);
             let p = rot.pos() + rot.up() * (s.width() / 2.0);  // Place point
             top.push(meshes[current_color_i].add_vert(&p));
 
             let mut rot = s.b.clone();
-            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
+            rot.rot_roll((2.0 * PI / (nb_face as f64)) * (i as f64));
             let p = rot.pos() + rot.up() * (s.width() / 2.0);
             bot.push(meshes[current_color_i].add_vert(&p));
         }
@@ -387,11 +386,11 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>,
         let e2 = meshes[current_color_i].add_vert(&e2);
 
         // We now have all points placed, we need to set faces
-        for i in 0..6 {
+        for i in 0..nb_face {
             let a_t = i;
-            let b_t = (i + 1) % 6;
+            let b_t = (i + 1) % nb_face;
             let a_b = i;
-            let b_b = (i + 1) % 6;
+            let b_b = (i + 1) % nb_face;
 
             meshes[current_color_i].add_face(top[a_t], top[b_t], bot[a_b]);
             meshes[current_color_i].add_face(top[b_t], bot[b_b], bot[a_b]);

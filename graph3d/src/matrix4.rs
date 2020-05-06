@@ -44,19 +44,19 @@ impl Matrix4 {
     }
 
     pub fn mult(&self, v: vector3::Vector3) -> vector3::Vector3 {
-        let x =   self.j0[0] * v.x()
-                + self.j1[0] * v.y()
-                + self.j2[0] * v.z()
+        let x =   self.j0[0] * *v.x()
+                + self.j1[0] * *v.y()
+                + self.j2[0] * *v.z()
                 + self.j3[0];  // * 1
 
-        let y =   self.j0[1] * v.x()
-                + self.j1[1] * v.y()
-                + self.j2[1] * v.z()
+        let y =   self.j0[1] * *v.x()
+                + self.j1[1] * *v.y()
+                + self.j2[1] * *v.z()
                 + self.j3[1];  // * 1
 
-        let z =   self.j0[2] * v.x()
-                + self.j1[2] * v.y()
-                + self.j2[2] * v.z()
+        let z =   self.j0[2] * *v.x()
+                + self.j1[2] * *v.y()
+                + self.j2[2] * *v.z()
                 + self.j3[2];  // * 1
 
         vector3::Vector3::new(x, y, z)

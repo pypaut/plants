@@ -60,6 +60,9 @@ fn main() -> Result<(), &'static str> {
         let mut shape_ctx = parse_rules::parse_rules(&shape_rule_str);
         for pat in &mut shape_ctx.patterns {
             pat.rule_set(alias);
+            for (obj, _) in &shape_ctx.objects {
+                pat.set_obj(obj);
+            }
         }
 
         shapesCtx.insert(alias.to_string(), shape_ctx);
@@ -79,6 +82,9 @@ fn main() -> Result<(), &'static str> {
     for pat in &mut ctx.patterns {
         for (alias, value) in &shapesRes {
             pat.replace(&alias, &value);
+        }
+        for (obj, _) in &ctx.objects {
+            pat.set_obj(obj);
         }
     }
 
