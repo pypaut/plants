@@ -6,6 +6,7 @@ use std::io::Write;
 use std::convert::TryInto;
 
 mod engine;
+mod matrix4;
 mod mesh;
 mod turtle;
 mod vector3;
