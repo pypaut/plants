@@ -84,7 +84,6 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
             None => return (0, HashMap::new())
         };
 
-        //FIXME fill a hashmap with object names and corresponding meshes
         let mut map = HashMap::new();
         loop {
             let object_name = match split.next() {
@@ -96,6 +95,7 @@ pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
                 _ => return (0, HashMap::new())
             };
 
+            //println!("{}", object_mesh.clone().get_str());
             map.insert(object_name.to_string(), object_mesh);
         }
 

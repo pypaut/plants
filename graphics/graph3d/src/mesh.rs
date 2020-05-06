@@ -1,4 +1,5 @@
 use crate::vector3;
+use std::fs;
 
 
 #[derive(Clone)]
@@ -15,7 +16,46 @@ impl Mesh {
     }
 
     pub fn load(path: &String) -> Mesh {
-        Mesh::new()//FIXME
+        let in_str = fs::read_to_string(path)
+            .expect("Failed reading file.");
+
+        let lines = in_str.lines();
+
+        let mut result = Mesh::new();
+        for l in lines {
+            let mut split = l.split(" ");
+            let line_type = match split.next() {
+                Some(s) => s,
+                _ => {continue;}
+            };
+
+            match line_type {
+                "v" => {
+                    let x = split.next().unwrap_or("0.0")
+                        .parse::<f64>()
+                        .expect("Invalid vertex data");
+                    let y = split.next().unwrap_or("0.0")
+                        .parse::<f64>()
+                        .expect("Invalid vertex data");
+                    let z = split.next().unwrap_or("0.0")
+                        .parse::<f64>()
+                        .expect("Invalid vertex data");
+                    result.add_vert(&vector3::Vector3::new(x, y, z));
+                },
+                "f" => {
+                    let mut face = Vec::new();
+                    for v_id in split {
+                        let mut id_split = v_id.split("/");
+                        let v_id = id_split.nth(0).expect("No face data.");
+                        let v_id = v_id.parse::<usize>().expect("Invalid face data.") - 1;
+                        face.push(v_id);
+                    }
+                    result.leaf_faces.push(face);
+                },
+                _ => {continue;}
+            }
+        }
+        result
     }
 
     pub fn add_vert(&mut self, p : &vector3::Vector3) -> usize {
