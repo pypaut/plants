@@ -123,10 +123,6 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 );
             },  // Place two points
             'f' => {
-                if leaf_mode > 0 {
-                    tmp_leaf.pts.push(t.pos().clone());
-                }
-
                 let mut new_dist = dist as f64;
 
                 // Check for ( parameter
