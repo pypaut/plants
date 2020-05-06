@@ -61,4 +61,28 @@ impl Mesh {
 
         res
     }
+
+    pub fn get_verts(&self) -> &Vec<vector3::Vector3> {
+        &self.verts
+    }
+
+    pub fn get_triangles(&self) -> &Vec<usize> {
+        &self.triangles
+    }
+
+    pub fn get_leaf_faces(&self) -> &Vec<Vec<usize>> {
+        &self.leaf_faces
+    }
+
+    pub fn set_verts(&mut self, verts: Vec<vector3::Vector3>) {
+        self.verts = verts;
+    }
+
+    pub fn set_triangles(&mut self, triangles: Vec<usize>) {
+        self.triangles = triangles;
+    }
+
+    pub fn set_leaf_faces(&mut self, leaf_faces: Vec<Vec<usize>>) {
+        self.leaf_faces = leaf_faces;
+    }
 }
