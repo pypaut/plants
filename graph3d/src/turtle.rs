@@ -17,7 +17,7 @@ impl Turtle {
     pub fn new() -> Turtle {
         Turtle{pos: vector3::Vector3::new(0f64, 0f64, 0f64),
         heading: vector3::Vector3::new(0f64, 0f64, 1f64),
-        left: vector3::Vector3::new(0f64, -1f64, 0f64),
+        left: vector3::Vector3::new(0f64, 1f64, 0f64),
         up: vector3::Vector3::new(1f64, 0f64, 0f64),
         size: 1.0}
     }

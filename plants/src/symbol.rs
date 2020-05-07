@@ -10,12 +10,13 @@ pub struct Symbol {
     pub sym: char,
     pub var_names : Vec<String>,
     pub params: Vec<Box<Arith>>,
-    pub rule_set : String//rule set name for replacing the symbol
+    pub rule_set : String,//rule set name for replacing the symbol
+    pub object : bool
 }
 
 impl Symbol {
     pub fn new(sym: char, params: Vec<Box<Arith>>, rule_set: String) -> Symbol {
-        Symbol{sym, params, var_names: Vec::new(), rule_set}
+        Symbol{sym, params, var_names: Vec::new(), rule_set, object: false}
     }
 
     pub fn new_with_values(sym: char, params: Vec<f32>, rule_set: String) -> Symbol {
@@ -44,7 +45,8 @@ impl Symbol {
                 Ok(Symbol{sym: sym.chars().nth(0).unwrap(),
                     var_names: Vec::new(),
                     params,
-                    rule_set: String::new()
+                    rule_set: String::new(),
+                    object: false
                 })
             }
         }
@@ -55,6 +57,12 @@ impl Symbol {
             false//if we have a parameter or we are not from the root file we return false
         } else {
             self.sym.to_string() == alias.to_string()//test if we have the correct symbol
+        }
+    }
+
+    pub fn set_obj(&mut self, name: &String) {
+        if &self.sym.to_string() == name {
+            self.object = true;
         }
     }
 
@@ -76,8 +84,16 @@ impl Symbol {
 
     pub fn to_string(&self) -> String {
         let mut res = self.sym.to_string();
-        if self.params.len() == 0 {
-            res
+        if self.params.len() == 0 {//only parameter-less symbols can be objects
+            if self.object {
+                res = String::from("~(");
+                res.push_str(&self.rule_set);
+                res.push(self.sym);
+                res.push(')');
+                res
+            } else {
+                res
+            }
         } else {
             res.push('(');
             // add values...

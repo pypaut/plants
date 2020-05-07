@@ -16,6 +16,13 @@ mod symbol;
 mod symbolstring;
 mod iter_ctx;
 
+fn get_output_string(header: &String, contents: &SymbolString) -> String {
+    if header.len() > 0 {
+        format!("{}\n{}", header, contents.to_string())
+    } else {
+        contents.to_string()
+    }
+}
 
 fn main() -> Result<(), &'static str> {
     let args: Vec<String> = env::args().collect();
@@ -53,6 +60,9 @@ fn main() -> Result<(), &'static str> {
         let mut shape_ctx = parse_rules::parse_rules(&shape_rule_str);
         for pat in &mut shape_ctx.patterns {
             pat.rule_set(alias);
+            for (obj, _) in &shape_ctx.objects {
+                pat.set_obj(obj);
+            }
         }
 
         shapesCtx.insert(alias.to_string(), shape_ctx);
@@ -73,6 +83,9 @@ fn main() -> Result<(), &'static str> {
         for (alias, value) in &shapesRes {
             pat.replace(&alias, &value);
         }
+        for (obj, _) in &ctx.objects {
+            pat.set_obj(obj);
+        }
     }
 
     //println!("{:?}", rules);
@@ -82,6 +95,19 @@ fn main() -> Result<(), &'static str> {
 
     //add root ctx to IterCtx map
     shapesCtx.insert("root".to_string(), ctx);
+
+    //create the output header string
+    let mut output_header = String::from("#");
+    for (rule_set, ctx) in &shapesCtx {
+        output_header.push_str(&ctx.get_object_header(rule_set, &file_folder));
+    }
+    let output_header = if output_header.len() > 1 {
+        output_header
+    } else {
+        String::new()
+    };
+
+    //iterate
     let n_iter = shapesCtx["root"].n_iter;
     for i in 0..n_iter {
         // Iterate once on final res
@@ -93,12 +119,12 @@ fn main() -> Result<(), &'static str> {
         if save_iter {
             let out_tmp = format!("{}{}", out_file, i.to_string());
             println!("Saving {}", out_tmp);
-            fs::write(out_tmp, res.to_string())
+            fs::write(out_tmp, get_output_string(&output_header, &res))
                 .expect("Unable to write to temporary output file.");
         }
     }
 
-    fs::write(out_file, res.to_string())
+    fs::write(out_file, get_output_string(&output_header, &res))
         .expect("Unable to write to output file");
 
     Ok(())

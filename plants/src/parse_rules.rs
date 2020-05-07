@@ -822,7 +822,8 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
         sym: 'a',
         var_names: Vec::new(),
         params: Vec::new(),
-        rule_set: String::new()
+        rule_set: String::new(),
+        object: false
     };
     let mut replacement : SymbolString = SymbolString{ symbols: Vec::new() };
     let mut has_pattern : bool = false;
@@ -913,6 +914,13 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
             let file = alias_file[1].clone();
             ctx.include.insert(alias, file);
         },
+        //object/import preproc
+        "object" => {
+            let obj_alias = get_define_value(ast, 0);
+            let alias = obj_alias[0].clone();
+            let file = obj_alias[1].clone();
+            ctx.objects.insert(alias, file);
+        }
         _ => {}
     };
 }
@@ -926,7 +934,8 @@ pub fn parse_rules(data : &str) -> IterCtx {
                                 n_iter   : 0,
                                 define   : HashMap::new(),
                                 include  : HashMap::new(),
-                                patterns : Vec::new()
+                                patterns : Vec::new(),
+                                objects  : HashMap::new()
     };
 
     for l in data.lines() {

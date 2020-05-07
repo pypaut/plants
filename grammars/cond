@@ -1,7 +1,7 @@
 #axiom F(1)A(1)C
 #niter 20
 #ignore F
-#include X simple_leaf
+#object X objects/cube.obj
 
 A(x)>C->A(x,x)F(1)A(x+1)
 G<F(x):x<2->F(x*1.1)

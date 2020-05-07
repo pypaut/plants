@@ -30,7 +30,8 @@ impl SymbolString {
                                 sym: 'a',
                                 var_names: Vec::new(),
                                 params: Vec::new(),
-                                rule_set: rule_set.clone()
+                                rule_set: rule_set.clone(),
+                                object: false
                        }}
                    }
                 }).collect();
@@ -55,6 +56,12 @@ impl SymbolString {
     pub fn rule_set(&mut self, rule_set: &String) {
         for sym in &mut self.symbols {
             sym.rule_set = rule_set.clone();
+        }
+    }
+
+    pub fn set_obj(&mut self, name: &String) {
+        for sym in &mut self.symbols {
+            sym.set_obj(name);
         }
     }
 

@@ -7,6 +7,8 @@ use crate::vector3;
 use turtle::Turtle;
 use mesh::Mesh;
 use vector3::Vector3;
+use std::collections::HashMap;
+use crate::object::Object;
 
 
 #[derive(Clone, Copy)]
@@ -74,8 +76,44 @@ fn get_parameter(s : &str, i : usize, len : usize) -> (&str, usize) {
     (parameter, e)
 }
 
+pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
+    if s.as_bytes()[0] as char == '#' {
+        let mut lines = s.lines();
+        //get only the first line and split it
+        let mut split = match lines.next() {
+            Some(l) => l.trim().split(" "),
+            None => return (0, HashMap::new())
+        };
 
-pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reason : f64, nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>) {
+        let mut map = HashMap::new();
+        while let Some(object_name) = split.next() {
+            let object_name = object_name.chars().skip(1).collect();
+
+            let object_mesh = match split.next() {
+                Some(s) => Mesh::load(&s.to_string()),
+                _ => return (0, HashMap::new())
+            };
+
+            //println!("{}", object_mesh.clone().get_str());
+            map.insert(object_name, object_mesh);
+        }
+
+        let mut i = 0;
+        while s.as_bytes()[i] as char != '\n' {
+            i += 1;
+        }
+        (i, map)
+    } else {
+        (0, HashMap::new())
+    }
+}
+
+pub fn read_str(s : &str,
+                dist : f64,
+                angle : f64,
+                d_limits : (f64, f64),
+                d_reason : f64,
+                nb_colors : i64) -> (Vec<Segment>, Vec<Leaf>, Vec<Object>) {
     if d_reason > 1.0 {
         panic!("Invalid reason.");
     }
@@ -88,6 +126,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
 
     let mut segments : Vec<Segment> = Vec::new();
     let mut leaves : Vec<Leaf> = Vec::new();
+    let mut objects : Vec<Object> = Vec::new();
 
     let max_d_delta = d_limits.1 - d_limits.0;//max - min
 
@@ -95,7 +134,9 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
     let mut leaf_stack: Vec<Leaf> = Vec::with_capacity(5);
 
     let len = s.len();
-    let mut i = 0;
+
+    //read header
+    let (mut i, mesh_map) = read_header(s);
 
     while i < len {
         // Read characters and add data to the output file
@@ -247,6 +288,18 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 t = Turtle::new_param(t.pos(), t.heading(), new_left,
                 new_up, t.size());
             },
+            '~' => {
+                if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
+                    let (parameter, e) = get_parameter(s, i + 2, len);
+                    match mesh_map.get(parameter) {
+                        Some(mesh) => {
+                            objects.push(Object::new(mesh.clone(), t));
+                        },
+                        _ => {}
+                    }
+                    i = e;
+                }
+            },
             '.' => {
                 if leaf_mode == 0 {
                     println!("ERROR : dot found out of leaf.");
@@ -267,7 +320,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
         i += 1;
     }
 
-    (process_segments(segments), leaves)
+    (process_segments(segments), leaves, objects)
 }
 
 
@@ -302,7 +355,8 @@ fn process_segments(segments : Vec<Segment>) -> Vec<Segment> {
     new_segments
 }
 
-pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64) -> Vec<Mesh> {
+pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>,
+                    objects : Vec<Object>, nb_colors: i64) -> Vec<Mesh> {
 
     let mut meshes : Vec<Mesh> = Vec::new();
 
@@ -317,15 +371,16 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64)
         let current_color_i : usize = s.color_i as usize;
 
         //println!("{:?}", s.a);
-        for i in 0..6 {  // Generate hexagons
+        let nb_face = 6;
+        for i in 0..nb_face {  // Generate hexagons
             let mut rot = s.a().clone();
-            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
+            rot.rot_roll((2.0 * PI / (nb_face as f64)) * (i as f64));
             //println!("{:?}", rot);
             let p = rot.pos() + rot.up() * (s.width() / 2.0);  // Place point
             top.push(meshes[current_color_i].add_vert(&p));
 
             let mut rot = s.b.clone();
-            rot.rot_roll((2.0 * PI / 6.0) * (i as f64));
+            rot.rot_roll((2.0 * PI / (nb_face as f64)) * (i as f64));
             let p = rot.pos() + rot.up() * (s.width() / 2.0);
             bot.push(meshes[current_color_i].add_vert(&p));
         }
@@ -336,11 +391,11 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64)
         let e2 = meshes[current_color_i].add_vert(&e2);
 
         // We now have all points placed, we need to set faces
-        for i in 0..6 {
+        for i in 0..nb_face {
             let a_t = i;
-            let b_t = (i + 1) % 6;
+            let b_t = (i + 1) % nb_face;
             let a_b = i;
-            let b_b = (i + 1) % 6;
+            let b_b = (i + 1) % nb_face;
 
             meshes[current_color_i].add_face(top[a_t], top[b_t], bot[a_b]);
             meshes[current_color_i].add_face(top[b_t], bot[b_b], bot[a_b]);
@@ -358,6 +413,11 @@ pub fn gen_geometry(segments : Vec<Segment>, leaves : Vec<Leaf>, nb_colors: i64)
             verts.push(meshes[current_color_i].add_vert(&v));
         }
         meshes[current_color_i].add_poly(verts);
+    }
+
+    for obj in objects {
+        //add all objects to result mesh
+        meshes[0].merge(&obj.get_transformed_mesh());
     }
 
     meshes
