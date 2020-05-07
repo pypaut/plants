@@ -38,8 +38,11 @@ run_plants () {
     for f in $ls_in; do
         file_in="../$in_dir/$f"
         file_out="../$out_tmp/$f"
-        cargo run --release -- "$file_in" "$file_out" 1 2> /dev/null
+        if [[ $(file --mime-type -b "$file_in") == text/plain ]]; then
+            cargo run --release -- "$file_in" "$file_out" 1 2> /dev/null &
+        fi
     done
+    wait
     cd ..
 }
 
@@ -54,8 +57,9 @@ run_graph () {
     for f in $ls_tmp; do
         file_in="../$out_tmp/$f"
         file_out="../$out_dir/$f"
-        cargo run --release -- "$file_in" "$file_out" $angle $dist 2> /dev/null
+        cargo run --release -- "$file_in" "$file_out" $angle $dist 2> /dev/null &
     done
+    wait
     cd ..
 }
 
