@@ -92,6 +92,7 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
     let max_d_delta = d_limits.1 - d_limits.0;//max - min
 
     let mut tmp_leaf = Leaf{pts: Vec::new(), color_i: current_color_i};
+    let mut leaf_stack: Vec<Leaf> = Vec::with_capacity(5);
 
     let len = s.len();
     let mut i = 0;
@@ -123,10 +124,6 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 );
             },  // Place two points
             'f' => {
-                if leaf_mode > 0 {
-                    tmp_leaf.pts.push(t.pos().clone());
-                }
-
                 let mut new_dist = dist as f64;
 
                 // Check for ( parameter
@@ -213,14 +210,16 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
             '|' => {t.rot_yaw(PI);},
             '[' => {stack.push(t.clone());},
             ']' => {t = stack.pop().unwrap_or(t);},
-            '{' => {leaf_mode = 1;},  // TODO: How can we manage leaves?
+            '{' => {
+                leaf_stack.push(tmp_leaf.clone());
+                leaf_mode += 1;
+                tmp_leaf = Leaf{pts: Vec::new(), color_i: current_color_i};
+            },  // :smirk:
             '}' => {
-                leaf_mode = 0;
-                if leaf_mode == 0 {  // Ending a leaf
-                    tmp_leaf.pts.push(t.pos().clone());
-                    leaves.push(tmp_leaf.clone());
-                    tmp_leaf = Leaf{pts: Vec::new(), color_i: current_color_i};
-                }
+                leaf_mode -= 1;
+                //tmp_leaf.pts.push(t.pos().clone());
+                leaves.push(tmp_leaf.clone());
+                tmp_leaf = leaf_stack.pop().unwrap_or(Leaf{pts: Vec::new(), color_i: current_color_i});
             },
             '!' => {
                 let mut has_parameter = false;
@@ -247,6 +246,12 @@ pub fn read_str(s : &str, dist : f64, angle : f64, d_limits : (f64, f64), d_reas
                 let new_up = t.heading().cross(new_left);
                 t = Turtle::new_param(t.pos(), t.heading(), new_left,
                 new_up, t.size());
+            },
+            '.' => {
+                if leaf_mode == 0 {
+                    println!("ERROR : dot found out of leaf.");
+                }
+                tmp_leaf.pts.push(t.pos().clone());
             },
             _ => {  // Unknown char : do nothing & ignore parameters, if any
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {

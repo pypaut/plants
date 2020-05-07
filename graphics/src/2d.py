@@ -11,7 +11,7 @@ class TurtleState:
         self.y = y
         self.h = h
 
-def execString(s, d=100, a=90):
+def execString(s, isLeaf, d=100, a=90):
     # Stack for branches
     stack = []
 
@@ -46,9 +46,9 @@ def execString(s, d=100, a=90):
             t.pendown()
         elif c == "|":
             t.right(180)
-        elif c == "{":
+        elif c == "{" and not isLeaf:
             t.begin_fill()
-        elif c == "}":
+        elif c == "}" and not isLeaf:
             t.end_fill()
         else:
             pass
@@ -62,13 +62,22 @@ def main():
         exit(1)
 
     d = 10
+
+    # Retrieve angle
     a = 22.5
-    if len(sys.argv) == 3:
+    if len(sys.argv) >= 3:
         a = float(sys.argv[2])
+
+    # Leaf grammar or not
+    isLeaf = False
+    if len(sys.argv) == 4:
+        isLeaf = True
+
+    # Filename
     filename = sys.argv[1]
     f = open(filename, "r")
     s = f.read()
-    execString(s, d, a)
+    execString(s, isLeaf, d, a)
     f.close()
 
 
