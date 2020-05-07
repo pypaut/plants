@@ -1,5 +1,6 @@
 use quaternion;
 use crate::vector3;
+use crate::vector3::Vector3;
 
 
 #[derive(Debug)]
@@ -90,5 +91,16 @@ impl Turtle {
                                                             self.left.to_arr()));
         self.up = vector3::Vector3::from(quaternion::rotate_vector(quat,
                                                           self.up.to_arr()));
+    }
+
+    pub fn rot_axis(&mut self, a: f64, axis: Vector3) {
+        let quat = quaternion::axis_angle(axis.to_arr(), a);
+
+        self.heading = vector3::Vector3::from(quaternion::rotate_vector(quat,
+                                                                        self.heading.to_arr()));
+        self.left = vector3::Vector3::from(quaternion::rotate_vector(quat,
+                                                                     self.left.to_arr()));
+        self.up = vector3::Vector3::from(quaternion::rotate_vector(quat,
+                                                                   self.up.to_arr()));
     }
 }

@@ -18,7 +18,7 @@ mod iter_ctx;
 
 fn get_output_string(header: &String, contents: &SymbolString) -> String {
     if header.len() > 0 {
-        format!("{}\n{}", header, contents.to_string())
+        format!("{}{}", header, contents.to_string())
     } else {
         contents.to_string()
     }
@@ -97,15 +97,30 @@ fn main() -> Result<(), &'static str> {
     shapesCtx.insert("root".to_string(), ctx);
 
     //create the output header string
+    let mut tropism_str = String::from("@");
+    for (rule_set, ctx) in &shapesCtx {
+        tropism_str.push_str(&ctx.get_tropism_header());
+    }
+
+    let mut tropism_str = if tropism_str.len() > 1 {
+        tropism_str.push('\n');
+        tropism_str
+    } else {
+        String::new()
+    };
+
     let mut output_header = String::from("#");
     for (rule_set, ctx) in &shapesCtx {
         output_header.push_str(&ctx.get_object_header(rule_set, &file_folder));
     }
     let output_header = if output_header.len() > 1 {
+        output_header.push('\n');
         output_header
     } else {
         String::new()
     };
+
+    tropism_str.push_str(output_header.as_str());
 
     //iterate
     let n_iter = shapesCtx["root"].n_iter;
@@ -119,12 +134,12 @@ fn main() -> Result<(), &'static str> {
         if save_iter {
             let out_tmp = format!("{}{}", out_file, i.to_string());
             println!("Saving {}", out_tmp);
-            fs::write(out_tmp, get_output_string(&output_header, &res))
+            fs::write(out_tmp, get_output_string(&tropism_str, &res))
                 .expect("Unable to write to temporary output file.");
         }
     }
 
-    fs::write(out_file, get_output_string(&output_header, &res))
+    fs::write(out_file, get_output_string(&tropism_str, &res))
         .expect("Unable to write to output file");
 
     Ok(())
