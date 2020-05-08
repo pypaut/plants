@@ -84,7 +84,7 @@ pub fn read_header(s: &str, i: usize) -> (usize, HashMap<String, mesh::Mesh>) {
         let line_pos = if i > 0 {1} else {0};
         let mut split = match lines.nth(line_pos) {
             Some(l) => l.trim().trim_start_matches('#').split(" "),
-            None => return (0, HashMap::new())
+            None => return (i, HashMap::new())
         };
 
         let mut map = HashMap::new();
@@ -93,7 +93,7 @@ pub fn read_header(s: &str, i: usize) -> (usize, HashMap<String, mesh::Mesh>) {
 
             let object_mesh = match split.next() {
                 Some(s) => Mesh::load(&s.to_string()),
-                _ => return (0, HashMap::new())
+                _ => return (i, HashMap::new())
             };
 
             //println!("{}", object_mesh.clone().get_str());
@@ -105,7 +105,7 @@ pub fn read_header(s: &str, i: usize) -> (usize, HashMap<String, mesh::Mesh>) {
         }
         (i, map)
     } else {
-        (0, HashMap::new())
+        (i, HashMap::new())
     }
 }
 
@@ -191,19 +191,20 @@ pub fn read_str(s : &str,
                     i = e;
                 }
 
+                //tropism. We do it before because it's more logical
+                if tropism_a < -0.0001 || tropism_a > 0.0001 {
+                    let r_axis = t.heading().cross(tropism_vec);
+                    let alpha = tropism_a * (r_axis).norm();
+
+                    if r_axis.norm() > 0.0001 {
+                        //we use alpha for simplicity
+                        t.rot_axis(alpha, r_axis.normalized());
+                    }
+                }
+
                 let a = t.clone();
                 t.forward(new_dist);
                 let b = t.clone();
-
-                //tropism
-                if tropism_a < -0.001 || tropism_a > 0.001 {
-                    let alpha = tropism_a * (t.heading().cross(tropism_vec)).norm();
-                    //println!("Alpha: {}", alpha);
-                    let R = Vector3::new(-*t.heading().y(),
-                    *t.heading().x(), 0.0);
-
-                    t.rot_axis(alpha, R);
-                }
 
                 segments.push(
                     Segment{a, b, width : d_limits.0 + t.size() * max_d_delta, color_i: current_color_i}
