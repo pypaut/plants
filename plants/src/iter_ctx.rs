@@ -10,7 +10,8 @@ pub struct IterCtx {
     pub define: HashMap<String, f32>,//saved constants
     pub include: HashMap<String, String>,//included predefined shapes
     pub patterns: Vec<Pattern>,
-    pub objects: HashMap<String, String>
+    pub objects: HashMap<String, String>,
+    pub tropism: Vec<String>,//if vec is not empty we have to add tropism to output
 }
 
 impl IterCtx {
@@ -28,6 +29,16 @@ impl IterCtx {
             tmp.push(' ');
             result.push_str(&tmp);
         }
+        result
+    }
+
+    pub fn get_tropism_header(&self) ->String {
+        let mut result = String::new();
+        for s in &self.tropism {//is tropism is empty, result is empty
+            result.push_str(s);
+            result.push(' ');
+        }
+
         result
     }
 }

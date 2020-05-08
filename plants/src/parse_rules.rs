@@ -874,7 +874,7 @@ fn create_rule(ast: Box<AstNode>) -> Result<Pattern, &'static str> {
     }
 }
 
-fn get_param_value(ast: Box<AstNode>, i: usize) -> String {
+fn get_param_value(ast: &Box<AstNode>, i: usize) -> String {
     if i >= ast.children.len() {
         "ERROR".to_string()
     } else {
@@ -900,9 +900,9 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
     }
 
     match ast.data.as_str() {
-        "ignore" => {ctx.ignored = get_param_value(ast, 0);},
-        "axiom" => {ctx.axiom = get_param_value(ast, 0);},
-        "niter" => {ctx.n_iter = get_param_value(ast, 0).parse::<usize>()
+        "ignore" => {ctx.ignored = get_param_value(&ast, 0);},
+        "axiom" => {ctx.axiom = get_param_value(&ast, 0);},
+        "niter" => {ctx.n_iter = get_param_value(&ast, 0).parse::<usize>()
             .expect("Invalid parameter formating for niter command.");},
         "define" => {
             let def = get_define_value(ast, 0);
@@ -920,7 +920,15 @@ fn read_preproc(ast: Box<AstNode>, ctx: &mut IterCtx) {
             let alias = obj_alias[0].clone();
             let file = obj_alias[1].clone();
             ctx.objects.insert(alias, file);
-        }
+        },
+        "tropism" => {
+            let mut params = Vec::new();
+            for i in 0..4 {
+                let cur = get_param_value(&ast, i);
+                params.push(cur);
+            }
+            ctx.tropism = params;
+        },
         _ => {}
     };
 }
@@ -935,7 +943,8 @@ pub fn parse_rules(data : &str) -> IterCtx {
                                 define   : HashMap::new(),
                                 include  : HashMap::new(),
                                 patterns : Vec::new(),
-                                objects  : HashMap::new()
+                                objects  : HashMap::new(),
+                                tropism  : Vec::new()
     };
 
     for l in data.lines() {

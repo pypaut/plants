@@ -76,35 +76,68 @@ fn get_parameter(s : &str, i : usize, len : usize) -> (&str, usize) {
     (parameter, e)
 }
 
-pub fn read_header(s: &str) -> (usize, HashMap<String, mesh::Mesh>) {
-    if s.as_bytes()[0] as char == '#' {
+pub fn read_header(s: &str, i: usize) -> (usize, HashMap<String, mesh::Mesh>) {
+    let mut i = i;
+    if s.as_bytes()[i] as char == '#' {
         let mut lines = s.lines();
         //get only the first line and split it
-        let mut split = match lines.next() {
-            Some(l) => l.trim().split(" "),
-            None => return (0, HashMap::new())
+        let line_pos = if i > 0 {1} else {0};
+        let mut split = match lines.nth(line_pos) {
+            Some(l) => l.trim().trim_start_matches('#').split(" "),
+            None => return (i, HashMap::new())
         };
 
         let mut map = HashMap::new();
         while let Some(object_name) = split.next() {
-            let object_name = object_name.chars().skip(1).collect();
+            let object_name = object_name.chars().collect();
 
             let object_mesh = match split.next() {
                 Some(s) => Mesh::load(&s.to_string()),
-                _ => return (0, HashMap::new())
+                _ => return (i, HashMap::new())
             };
 
             //println!("{}", object_mesh.clone().get_str());
             map.insert(object_name, object_mesh);
         }
 
-        let mut i = 0;
         while s.as_bytes()[i] as char != '\n' {
             i += 1;
         }
         (i, map)
     } else {
-        (0, HashMap::new())
+        (i, HashMap::new())
+    }
+}
+
+pub fn read_tropism(s: &str) -> (usize, Vector3, f64) {
+    let mut i = 0;
+    if s.as_bytes()[0] as char == '@' {
+        let mut lines = s.lines();
+        //get only the first line and split it
+        let mut split = match lines.nth(0) {
+            Some(l) => l.trim().trim_start_matches('@').split(" "),
+            None => return (0, Vector3::new(0.0,0.0,0.0), 0.0)
+        };
+
+        let mut data = Vec::new();
+        for _ in 0..4 {
+            let f_str = match split.next() {
+                Some(f) => {f},
+                _ => "0.0"
+            };
+            let f = f_str.parse::<f64>().expect("Invalid tropism data");
+
+            data.push(f);
+        }
+
+        while s.as_bytes()[i] as char != '\n' {
+            i += 1;
+        }
+        let v = Vector3::new(data[0], data[1], data[2]);
+        let a = data[3];
+        (i, v, a)
+    } else {
+        (0, Vector3::new(0.0,0.0,0.0), 0.0)
     }
 }
 
@@ -136,7 +169,8 @@ pub fn read_str(s : &str,
     let len = s.len();
 
     //read header
-    let (mut i, mesh_map) = read_header(s);
+    let (mut i, tropism_vec, tropism_a) = read_tropism(s);
+    let (mut i, mesh_map) = read_header(s, i);
 
     while i < len {
         // Read characters and add data to the output file
@@ -157,9 +191,21 @@ pub fn read_str(s : &str,
                     i = e;
                 }
 
+                //tropism. We do it before because it's more logical
+                if tropism_a < -0.0001 || tropism_a > 0.0001 {
+                    let r_axis = t.heading().cross(tropism_vec);
+                    let alpha = tropism_a * (r_axis).norm();
+
+                    if r_axis.norm() > 0.0001 {
+                        //we use alpha for simplicity
+                        t.rot_axis(alpha, r_axis.normalized());
+                    }
+                }
+
                 let a = t.clone();
                 t.forward(new_dist);
                 let b = t.clone();
+
                 segments.push(
                     Segment{a, b, width : d_limits.0 + t.size() * max_d_delta, color_i: current_color_i}
                 );
@@ -183,6 +229,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 
@@ -195,6 +242,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 
@@ -207,6 +255,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 
@@ -219,6 +268,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 
@@ -231,6 +281,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 
@@ -243,6 +294,7 @@ pub fn read_str(s : &str,
                 if i + 1 < len && (s.as_bytes()[i+1] as char) == '(' {
                     let (parameter, e) = get_parameter(s, i + 2, len);
                     new_angle = parameter.parse().unwrap();
+                    new_angle = (new_angle * PI) / 180.0;
                     i = e;
                 }
 

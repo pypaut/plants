@@ -102,6 +102,10 @@ pub fn lexer(rules : &str) -> VecDeque<Token> {
                 //while we have something to read and we are reading digits or a dot
                 let mut c = line.chars().nth(i).unwrap();
                 let mut s = String::new();
+                if c == '-' {
+                    i += 1;
+                    s.push(c);
+                }
                 while i < line.len() && (c.is_digit(10)
                     || (c == '.' && !dot)) {
                     s.push(c);

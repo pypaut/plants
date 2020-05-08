@@ -1,0 +1,13 @@
+#define da 112.50
+#define db 157.50
+#define a 22.50
+#define lr 1.790
+#define vr 1.732
+#tropism -0.02 0 -1.0 0.27
+
+#axiom A
+#niter 8
+
+A->!(vr)F(5.0)[&(a)F(5.0)A]/(da)[&(a)F(5.0)A]/(db)[&(a)F(5.0)A]
+F(l)->F(l*lr)
+!(w)->!(w*vr)
