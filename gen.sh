@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#set -x
+set -x
 
 if [ $# -ne 2 ]; then
     exit 1
@@ -38,7 +38,7 @@ run_plants () {
     for f in $ls_in; do
         file_in="../$in_dir/$f"
         file_out="../$out_tmp/$f"
-        if [[ $(file --mime-type -b "$file_in") == text/plain ]]; then
+        if [[ $(file --mime-type -b "$file_in") == text/* ]]; then
             cargo run --release -- "$file_in" "$file_out" 1 2> /dev/null &
         fi
     done
