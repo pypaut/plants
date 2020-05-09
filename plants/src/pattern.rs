@@ -233,6 +233,8 @@ impl Pattern {
             None => return (true, Vec::new())
         };
 
+        //println!("RCTX test:");
+
         let mut values = Vec::new();
         let mut lvl = 0;
         let mut pat_lvl = if cur == &'[' {1} else {0};
@@ -246,9 +248,13 @@ impl Pattern {
             }
             //ignore ignored chars and chars from different rule sets
             if ignore.contains(&c.sym.to_string()) || c.rule_set != cur.rule_set {
+                //println!("Ignored: {}", c.to_string());
                 continue
             }
-            else if c == cur && lvl >= 0 && lvl >= pat_lvl {
+            else if c == cur && lvl >= 0 && lvl == pat_lvl {
+                //println!("Match: {}", c.to_string());
+                //println!("C: {}", c.to_string());
+                //println!("Cur: {}", cur.to_string());
                 let mut params = c.get_vec();
                 values.append(&mut params);
                 cur = match ctx.next() {
@@ -263,7 +269,10 @@ impl Pattern {
                 }
             }
             else {
-                if lvl >= 0 && (c == &'[' || c == &']' || lvl >= pat_lvl) {
+                if lvl >= 0 && (c == &'[' || c == &']' || lvl > pat_lvl) {
+                    //println!("Continue: lvl={}, pat_lvl={}", lvl, pat_lvl);
+                    //println!("C: {}", c.to_string());
+                    //println!("Cur: {}", cur.to_string());
                     continue;
                 }
                 else {
