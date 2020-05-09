@@ -1,0 +1,9 @@
+#include L include/leaf1
+#object C objects/flower.obj
+
+#axiom K
+#niter 15
+
+K->['L]B(0)
+B(x):x>11->^(90)C
+B(x)->B(x+1)
