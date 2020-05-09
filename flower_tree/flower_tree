@@ -1,0 +1,21 @@
+#include V include/flower
+#define da 94.74
+#define db 132.63
+#define a 18.95
+#define lr 1.109
+#define vr 1.632
+#define max 8
+#tropism -0.02 0 -1.0 0.27
+
+#ignore &F
+#axiom !(1)F(200)/(45)A(1)
+#niter 10
+
+A(x):x>=max->C(0)K
+A(x)->!(vr)BF(50)B[&(a)F(50)A(x+1)]/(da)[&(a)F(50)A(x+1)]/(db)[&(a)F(50)A(x+1)]
+B>[C(x)]:x<=3->C(x+1)[&(60)!(vr)F(max*lr)K][^(60)!(vr)F(max*lr)K]
+B>C(x):x<=3->C(x+1)[&(60)!(vr)F(max*lr)K][^(60)!(vr)F(max*lr)K]
+B>C(x)->C(x+1)
+K->V
+F(l)->F(l*lr)
+!(w)->!(w*vr)
