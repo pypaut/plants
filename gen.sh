@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -x
+#set -x
 
 if [ $# -ne 2 ]; then
     exit 1

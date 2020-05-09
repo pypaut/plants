@@ -152,6 +152,7 @@ pub fn read_str(s : &str,
     }
 
     let mut current_color_i = 0;
+    let mut color_stack = Vec::new();
 
     let mut t = Turtle::new();
     let mut stack : Vec<Turtle> = Vec::with_capacity(10);
@@ -301,8 +302,14 @@ pub fn read_str(s : &str,
                 t.rot_roll(-new_angle);
             },
             '|' => {t.rot_yaw(PI);},
-            '[' => {stack.push(t.clone());},
-            ']' => {t = stack.pop().unwrap_or(t);},
+            '[' => {
+                stack.push(t.clone());
+                color_stack.push(current_color_i);
+            },
+            ']' => {
+                t = stack.pop().unwrap_or(t);
+                current_color_i = color_stack.pop().unwrap_or(0);
+            },
             '{' => {
                 leaf_stack.push(tmp_leaf.clone());
                 leaf_mode += 1;

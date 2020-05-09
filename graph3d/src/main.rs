@@ -52,6 +52,7 @@ fn main() {
     let mut colors = Vec::new();
     colors.push((90.0, 35.0, 35.0));    // 5a2323, brown
     colors.push((118.0, 156.0, 35.0));  // 769c23, green
+    colors.push((118.0, 156.0, 35.0));//third color just to add more possibilities
 
     // Generate segments
     let nb_colors : i64 = (&colors).len().try_into().unwrap();

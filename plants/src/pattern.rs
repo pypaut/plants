@@ -244,11 +244,11 @@ impl Pattern {
             else if c == &']' {
                 lvl -= 1;
             }
-            if ignore.contains(&c.sym.to_string())
-            {
+            //ignore ignored chars and chars from different rule sets
+            if ignore.contains(&c.sym.to_string()) || c.rule_set != cur.rule_set {
                 continue
             }
-            else if c == cur && lvl >= 0 && lvl == pat_lvl {
+            else if c == cur && lvl >= 0 && lvl >= pat_lvl {
                 let mut params = c.get_vec();
                 values.append(&mut params);
                 cur = match ctx.next() {
@@ -263,7 +263,7 @@ impl Pattern {
                 }
             }
             else {
-                if lvl >= 0 && (c == &'[' || c == &']' || lvl != pat_lvl) {
+                if lvl >= 0 && (c == &'[' || c == &']' || lvl >= pat_lvl) {
                     continue;
                 }
                 else {
@@ -302,7 +302,8 @@ impl Pattern {
 
             //ignore branches that came before the current char
             //because they are not part of the left context
-            else if lvl <= min_lvl  && !ignore.contains(&c.sym.to_string()) {
+            else if lvl <= min_lvl  && !(ignore.contains(&c.sym.to_string())
+                || c.rule_set != cur.rule_set) {
                 if c == cur {
                     let mut params = c.get_vec();
                     params.append(&mut values);
@@ -329,6 +330,7 @@ impl Pattern {
         if rng.gen_bool(self.p.into()) {
             //if (self.left == ' ') && (self.right == ' ') {  // No context
             let mut valid = s.symbols[i] == self.pattern;
+            //println!("Letter: {:?}", self.pattern);
             let pat_values = if !valid {
                 return false;
             } else {
@@ -355,6 +357,7 @@ impl Pattern {
                                            ignored),
                 None => (true, Vec::new())
             };
+            //println!("Valid rctx: {}", valid_tmp);
             valid &= valid_tmp;
             if !valid {
                 return false;
@@ -402,7 +405,11 @@ impl Pattern {
                 let mut cond_tmp = cond.clone();
                 for v in cond_vars {
                     if !bindings.contains_key(v) {
-                        panic!("Could not read cond variable in binding table.");
+                        if !ctx.define.contains_key(v) {
+                            panic!("Could not read cond variable in binding table.");
+                        } else {
+                            cond_tmp.set(v, ctx.define[v]);
+                        }
                     } else {
                         cond_tmp.set(v, bindings[v]);
                     }
