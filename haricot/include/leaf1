@@ -1,0 +1,6 @@
+#define rot 15
+#define len 0.3
+#axiom [A][B]
+A->[+(rot)A{.].C.}
+B->[-(rot)B{.].C.}
+C->f(len)C

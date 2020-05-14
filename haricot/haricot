@@ -1,0 +1,8 @@
+#axiom 'A(1)
+#niter 13
+#object C objects/bigflower.obj
+#include L include/leaf1
+
+A(x):x<4->BF(5)A(x+1)
+A(x)->!FF!FC
+B->\(40)[!!!+F!F!F!F!f(0.1)'/(90)&(90)L][!!!-F!F!F!F!f(0.1)'/(90)^(90)L]

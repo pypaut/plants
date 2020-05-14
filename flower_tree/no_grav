@@ -5,7 +5,6 @@
 #define lr 1.109
 #define vr 1.632
 #define max 8
-#tropism -0.02 0 -1.0 0.27
 
 #ignore &F
 #axiom !(1)F(200)/(45)A(1)

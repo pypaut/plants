@@ -3,7 +3,6 @@
 #define a 18.95
 #define lr 1.109
 #define vr 1.732
-#tropism -0.02 0 -1.0 0.27
 
 #axiom !(1)F(200)/(45)A
 #niter 8
